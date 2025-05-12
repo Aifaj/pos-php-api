@@ -6,26 +6,38 @@ use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $table            = 'user_mst';
-    protected $primaryKey       = 'userId';
+    protected $table            = 'tenant_user';
+    protected $primaryKey       = 'tenantUserId';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['userId', 'name', 'email', 'mobileNo', 'countryCode', 'username', 'password', 'uid', 'roleId', 'photoUrl', 'emailVerified', 'mobileVerified', 'aboutUs', 'location', 'themeColor', 'cardId', 'businessCategory', 'businessSubCategory', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy', 'token', 'otp', 'otpRequestTime', 'isActive', 'isDeleted'];
+
+    protected $allowedFields    = [
+        'tenantUserId',
+        'userEmail',
+        'userPassword',
+        'tenantName',
+        'databaseName',
+        'username',
+        'password',
+        'hostUrl',
+        'userId',
+        'cardUrl',
+        'createdDate',
+        'isActive',
+        'isDeleted'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
-
-    protected array $casts = [];
-    protected array $castHandlers = [];
 
     // Dates
     protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'createdDate';
-    protected $updatedField  = 'modifiedDate';
-    protected $deletedField  = 'deletedDate';
+    protected $updatedField  = ''; // No updated field provided
+    protected $deletedField  = ''; // No deleted field provided
 
     // Validation
     protected $validationRules      = [];
