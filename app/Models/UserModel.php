@@ -6,38 +6,26 @@ use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $table            = 'tenant_user';
-    protected $primaryKey       = 'tenantUserId';
+    protected $table            = 'user_mst';
+    protected $primaryKey       = 'userId';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-
-    protected $allowedFields    = [
-        'tenantUserId',
-        'userEmail',
-        'userPassword',
-        'tenantName',
-        'databaseName',
-        'username',
-        'password',
-        'hostUrl',
-        'userId',
-        'cardUrl',
-        'createdDate',
-        'isActive',
-        'isDeleted'
-    ];
+    protected $allowedFields    = ['userId', 'name', 'email', 'mobileNo', 'countryCode', 'username', 'password', 'uid', 'roleId', 'photoUrl', 'emailVerified', 'mobileVerified', 'aboutUs', 'location', 'themeColor', 'cardId', 'businessCategory', 'businessSubCategory', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy', 'token', 'otp', 'otpRequestTime', 'isActive', 'isDeleted'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
+
+    protected array $casts = [];
+    protected array $castHandlers = [];
 
     // Dates
     protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'createdDate';
-    protected $updatedField  = ''; // No updated field provided
-    protected $deletedField  = ''; // No deleted field provided
+    protected $updatedField  = 'modifiedDate';
+    protected $deletedField  = 'deletedDate';
 
     // Validation
     protected $validationRules      = [];
