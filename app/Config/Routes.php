@@ -170,8 +170,8 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
   $routes->group('item', function ($routes) {
     //Routes for item
-    $routes->get('getall', 'Item::index',['filter' => ['authFilter', 'tenantFilter']]);
-    $routes->post('getallpaging', 'Item::getItemsPaging',['filter' => ['authFilter', 'tenantFilter']]);
+    $routes->get('getall', 'Item::index',['filter' => ['tenantFilter']]);
+    $routes->post('getallpaging', 'Item::getItemsPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Item::show/$1',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('create', 'Item::create',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('update', 'Item::update',['filter' => ['authFilter','tenantFilter']]);
@@ -313,7 +313,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
   $routes->group('order', function ($routes) {
     //Routes for order
     $routes->get('getall', 'Order::index',['filter' => ['authFilter', 'tenantFilter']]);
-    $routes->post('getallpaging', 'Order::getOrdersPaging',['filter' => ['authFilter', 'tenantFilter']]);
+    $routes->post('getallpaging', 'Order::getOrdersPaging',['filter' => ['tenantFilter']]);
     $routes->post('create', 'Order::create',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('update', 'Order::update',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('delete', 'Order::delete',['filter' => ['authFilter','tenantFilter']]);

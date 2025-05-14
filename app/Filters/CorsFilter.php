@@ -10,9 +10,7 @@ class CorsFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        log_message('error', 'CORS Filter');
-
-        // Allowed origins
+        // Allowed origins (you can extend or modify this list as needed)
         $allowedOrigins = [
             'https://admin.exiaa.com',
             'http://localhost:4200',
@@ -33,21 +31,23 @@ class CorsFilter implements FilterInterface
         // Get the origin of the request
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 
-        log_message('error', 'Origin: ' . $origin);
-
         // Check if the origin is in the allowed list
         if (in_array($origin, $allowedOrigins)) {
             header("Access-Control-Allow-Origin: $origin");
+        } else {
+            // If origin is not allowed, return an error response (optional)
+            header("Access-Control-Allow-Origin: *"); // This allows all domains, not recommended for production
         }
-        // Set CORS headers
-        //header('Access-Control-Allow-Origin: https://admin.exiaa.com'); // Update with your frontend URL
+
+        // Set additional CORS headers
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Tenant');
-        header('Access-Control-Allow-Credentials: true'); // Optional if credentials are needed
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Tenant, x-tenant-config');
+        header('Access-Control-Allow-Credentials: true'); // Allow credentials if required
 
         // Handle preflight OPTIONS requests
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(204); // No Content
+            // Send a 204 response (no content) for preflight requests
+            http_response_code(204); 
             exit();
         }
     }

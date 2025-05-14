@@ -20,6 +20,26 @@ class TenantUser extends BaseController
         //
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    // emailId Password
+
     public function loginWithMobileUid()
     {
         $input = $this->request->getJSON();

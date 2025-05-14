@@ -12,6 +12,9 @@ use App\Models\RoleModel;
 use App\Models\BusinessModel;
 use App\Models\BusinessCategoryModel;
 
+use App\Libraries\TenantService;
+use App\Models\TenantUserModel;
+
 
 use App\Models\TenantModel;
 
@@ -164,97 +167,263 @@ class User extends BaseController
         return $this->respond(['menu' => $menu], 200);
     }
 
-    public function login()
-    {
-        $userModel = new UserModel();
-        $rolePermissionModel = new RolePermissionModel();
-        $rightModel = new RightModel();
-        $roleModel = new RoleModel();
-        $userBusiness = new UserBusiness();
-        $business = new BusinessModel();
+    // public function login()
+    // {
+    //     $userModel = new UserModel();
+    //     $rolePermissionModel = new RolePermissionModel();
+    //     $rightModel = new RightModel();
+    //     $roleModel = new RoleModel();
+    //     $userBusiness = new UserBusiness();
+    //     $business = new BusinessModel();
 
-        $input = $this->request->getJSON();
+    //     $input = $this->request->getJSON();
         
-        $user = $userModel->where('email', $input->email)->first();
-        if(is_null($user)) {
-            return $this->respond(['status' => false, 'message' => 'Email not found.'], 401);
-        }
-        $role = $roleModel->where('roleId', $user['roleId'])->first();
-        $user['role'] = $role;    
+    //     $user = $userModel->where('email', $input->email)->first();
+    //     if(is_null($user)) {
+    //         return $this->respond(['status' => false, 'message' => 'Email not found.'], 401);
+    //     }
+    //     $role = $roleModel->where('roleId', $user['roleId'])->first();
+    //     $user['role'] = $role;    
   
-        $pwd_verify = password_verify($input->password, $user['password']);
+    //     $pwd_verify = password_verify($input->password, $user['password']);
         
-        if(!$pwd_verify) {
-            return $this->respond(['status' => false, 'message' => 'Password is incorrect'], 401);
-        }
+    //     if(!$pwd_verify) {
+    //         return $this->respond(['status' => false, 'message' => 'Password is incorrect'], 401);
+    //     }
  
-        $key = "Exiaa@11";
-        $iat = time(); // current timestamp value
-        $exp = $iat + 3600;
+    //     $key = "Exiaa@11";
+    //     $iat = time(); // current timestamp value
+    //     $exp = $iat + 3600;
 
-        if($role['roleId'] == 1){
-            $payload = array(
-                "iss" => "Issuer of the JWT",
-                "aud" => "Audience that the JWT",
-                "sub" => "Subject of the JWT",
-                "iat" => $iat, //Time the JWT issued at
-                "exp" => $exp, // Expiration time of token
-                "email" => $user['email'],
-                "roleId" => $user['roleId'],
-                "userId" => $user['userId']
-            );
-        }else{
+    //     if($role['roleId'] == 1){
+    //         $payload = array(
+    //             "iss" => "Issuer of the JWT",
+    //             "aud" => "Audience that the JWT",
+    //             "sub" => "Subject of the JWT",
+    //             "iat" => $iat, //Time the JWT issued at
+    //             "exp" => $exp, // Expiration time of token
+    //             "email" => $user['email'],
+    //             "roleId" => $user['roleId'],
+    //             "userId" => $user['userId']
+    //         );
+    //     }else{
 
-            $userBusiness = $userBusiness->where('userId', $user['userId'])->findAll();
+    //         $userBusiness = $userBusiness->where('userId', $user['userId'])->findAll();
 
-            if(empty($userBusiness)){
-                return $this->respond(['status' => false, 'message' => 'User not assigned to any business, contact admin', 'data' => []], 401);
-            }
+    //         if(empty($userBusiness)){
+    //             return $this->respond(['status' => false, 'message' => 'User not assigned to any business, contact admin', 'data' => []], 401);
+    //         }
 
-            $user['business'] = $business->where('businessId', $userBusiness[0]['businessId'])->first();
+    //         $user['business'] = $business->where('businessId', $userBusiness[0]['businessId'])->first();
 
-            if($user['business']['isActive'] == 0 || $user['business']['isDeleted'] == 1){
-                return $this->respond(['status' => false, 'message' => 'User is not active or deleted, contact admin', 'data' => []], 401);
-            }
+    //         if($user['business']['isActive'] == 0 || $user['business']['isDeleted'] == 1){
+    //             return $this->respond(['status' => false, 'message' => 'User is not active or deleted, contact admin', 'data' => []], 401);
+    //         }
 
-            if($user['business']['tenantName'] == null || $user['business']['tenantName'] == ''){
-                return $this->respond(['status' => false, 'message' => 'Tenant not assigned to any business, contact admin', 'data' => []], 401);
-            }
+    //         if($user['business']['tenantName'] == null || $user['business']['tenantName'] == ''){
+    //             return $this->respond(['status' => false, 'message' => 'Tenant not assigned to any business, contact admin', 'data' => []], 401);
+    //         }
 
             
     
-            $payload = array(
-                "iss" => "Issuer of the JWT",
-                "aud" => "Audience that the JWT",
-                "sub" => "Subject of the JWT",
-                "iat" => $iat, //Time the JWT issued at
-                "exp" => $exp, // Expiration time of token
-                "email" => $user['email'],
-                "roleId" => $user['roleId'],
-                "userId" => $user['userId'],
-                "businessId" => $user['business']['businessId'],
-                "tenantName" => $user['business']['tenantName'],
-                "businessCategoryId" => $user['business']['businessCategoryId'],
-            );
-        }
+    //         $payload = array(
+    //             "iss" => "Issuer of the JWT",
+    //             "aud" => "Audience that the JWT",
+    //             "sub" => "Subject of the JWT",
+    //             "iat" => $iat, //Time the JWT issued at
+    //             "exp" => $exp, // Expiration time of token
+    //             "email" => $user['email'],
+    //             "roleId" => $user['roleId'],
+    //             "userId" => $user['userId'],
+    //             "businessId" => $user['business']['businessId'],
+    //             "tenantName" => $user['business']['tenantName'],
+    //             "businessCategoryId" => $user['business']['businessCategoryId'],
+    //         );
+    //     }
          
-        $token = JWT::encode($payload, $key, 'HS256');
-        $refreshToken = bin2hex(random_bytes(32)); // Generate random token
+    //     $token = JWT::encode($payload, $key, 'HS256');
+    //     $refreshToken = bin2hex(random_bytes(32)); // Generate random token
  
-        $response = [
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => $exp,
-            'exp' => $exp,
-            'refresh_token' => $refreshToken
-        ];
+    //     $response = [
+    //         'access_token' => $token,
+    //         'token_type' => 'Bearer',
+    //         'expires_in' => $exp,
+    //         'exp' => $exp,
+    //         'refresh_token' => $refreshToken
+    //     ];
          
-        return $this->respond($response, 200);
+    //     return $this->respond($response, 200);
+    // }
+
+
+
+//     public function login()
+// {
+//      $tenantService = new TenantService();
+//             $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+//             $model = new UserModel($db);
+//             $response = [
+//                 "status" => true,
+//                 "message" => "All Data Fetched",
+//                 "data" => $model->findAll(),
+//             ];
+//             return $this->respond($response, 200);
+// }
+ 
+
+    
+
+    //  public function login()
+    // {
+        
+    //     $input = $this->request->getJSON();
+
+    //     $cardemail = $input->cardemail ?? null;
+    //     $password = $input->password ?? null;
+    //     $selectedCard = $input->selectedCard ?? null;
+        
+
+    //     // $tenantService = new TenantService();
+    //     // $tenantKey = $this->request->getHeaderLine('X-Tenant-Config');
+    //     // $db = $tenantService->getTenantConfig($tenantKey);
+
+
+    //     $userModel = new TenantUserModel();
+    //     $user = $userModel->where('email', $input->email)->first();
+    //     if(is_null($user)) {
+    //         return $this->respond(['status' => false, 'message' => 'Email not found.'], 401);
+    //     }
+        
+  
+    //     $pwd_verify = password_verify($input->password, $user['password']);
+        
+    //     if(!$pwd_verify) {
+    //         return $this->respond(['status' => false, 'message' => 'Password is incorrect'], 401);
+    //     }
+ 
+    //     $key = "Exiaa@11";
+    //     $iat = time(); // current timestamp value
+    //     $exp = $iat + 3600;
+
+    //         $payload = array(
+    //             "iss" => "Issuer of the JWT",
+    //             "aud" => "Audience that the JWT",
+    //             "sub" => "Subject of the JWT",
+    //             "iat" => $iat, //Time the JWT issued at
+    //             "exp" => $exp, // Expiration time of token
+    //             "email" => $user['email'],
+    //             "roleId" => $user['roleId'],
+    //             "userId" => $user['userId']
+    //         );
+       
+         
+    //     $token = JWT::encode($payload, $key, 'HS256');
+    //     $refreshToken = bin2hex(random_bytes(32)); // Generate random token
+ 
+    //     $response = [
+    //         'access_token' => $token,
+    //         'token_type' => 'Bearer',
+    //         'expires_in' => $exp,
+    //         'exp' => $exp,
+    //         'refresh_token' => $refreshToken
+    //     ];
+         
+    //     return $this->respond($response, 200);
+    // }
+
+
+// public function login()
+// {
+//     try {
+//         $input = $this->request->getJSON();
+
+//         log_message('debug', 'Login Header: ' . $this->request->getHeaderLine('X-Tenant-Config'));
+
+//         $tenantHeader = $this->request->getHeaderLine('X-Tenant-Config');
+
+//         log_message('debug', 'Tenant Header: ' . $tenantHeader);
+
+//         $tenantService = new TenantService();
+//         $db = $tenantService->getTenantConfig($tenantHeader);
+
+//         if (!$db) {
+//             return $this->respond([
+//                 'status' => false,
+//                 'message' => 'Tenant configuration not found.'
+//             ], 400);
+//         }
+
+//         // Proceed with authentication logic here
+
+//         return $this->respond([
+//             'status' => true,
+//             'message' => 'Tenant configuration found and login logic goes here.'
+//         ]);
+
+//     } catch (\Throwable $e) {
+//         log_message('error', 'Login Error: ' . $e->getMessage());
+//         return $this->respond([
+//             'status' => false,
+//             'message' => 'An internal server error occurred.'
+//         ], 500);
+//     }
+// }
+
+
+public function login()
+{
+    $data = $this->request->getJSON(true);
+    $email = $data['email'] ?? null;
+    $password = $data['password'] ?? null;
+    $selectedCard = $data['selectedCard'] ?? null;
+
+    if (!$email || !$password) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Email or password missing'
+        ], 400);
     }
+
+    // Step 1: Connect to tenant DB
+    $dbName = 'biznfc_' . $selectedCard;
+    $tenantDb = \App\Libraries\TenantDatabase::connectTo($dbName);
+
+    if (!$tenantDb) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Could not connect to tenant database'
+        ], 500);
+    }
+
+    // Step 2: Load TenantUserModel and inject the new DB connection
+    $userModel = new \App\Models\TenantUserModel($tenantDb); // assumes constructor accepts $db
+    $user = $userModel->where('email', $email)
+                      ->where('isDeleted', 0)
+                      ->where('isActive', 1)
+                      ->first();
+
+    if (!$user || !password_verify($password, $user['password'])) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Invalid credentials'
+        ], 401);
+    }
+
+    return $this->respond([
+        'status' => true,
+        'message' => 'Login successful',
+        'tenant' => $user,
+    ], 200);
+}
+
 
     public function register()
     {
         $input = $this->request->getJSON();
+
+        $selectedCard = $input->selectedCard ?? null;
+
+
         $rules = [
             'name' => ['rules' => 'required|min_length[4]|max_length[255]'],
             'email' => ['rules' => 'required|min_length[4]|max_length[255]|valid_email|is_unique[user_mst.email]'],
@@ -264,7 +433,11 @@ class User extends BaseController
         ];
   
         if($this->validate($rules)){
-            $model = new UserModel();
+
+         $dbName = 'biznfc_' . $selectedCard;
+         $tenantDb = \App\Libraries\TenantDatabase::connectTo($dbName);
+         $model = new \App\Models\TenantUserModel($tenantDb);
+           // $model = new UserModel();
             $data = [
                 'name'     => $input->name,
                 'mobileNo' => $input->mobile,
