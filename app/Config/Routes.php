@@ -134,10 +134,10 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
   $routes->group('customer', function ($routes) {
     //Routes for customer
-    $routes->get('getall', 'Customer::index',['filter' => ['authFilter', 'tenantFilter']]);
-    $routes->post('getallpaging', 'Customer::getCustomersPaging',['filter' => ['authFilter', 'tenantFilter']]);
+    $routes->get('getall', 'Customer::index',['filter' => ['tenantFilter']]);
+    $routes->post('getallpaging', 'Customer::getCustomersPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Customer::show/$1',['filter' => 'authFilter']);
-    $routes->post('create', 'Customer::create',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('create', 'Customer::create',['filter' => ['tenantFilter']]);
     $routes->post('update', 'Customer::update',['filter' => ['authFilter','tenantFilter']]);
     $routes->get('getallwebsite', 'Customer::getCustomersWebsite',['filter' => ['tenantFilter']]); // Get all customer for website
     $routes->post('delete', 'Customer::delete',['filter' => ['authFilter','tenantFilter']]);
@@ -173,16 +173,16 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->get('getall', 'Item::index',['filter' => ['tenantFilter']]);
     $routes->post('getallpaging', 'Item::getItemsPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Item::show/$1',['filter' => ['authFilter','tenantFilter']]);
-    $routes->post('create', 'Item::create',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('create', 'Item::create',['filter' => ['tenantFilter']]);
     $routes->post('update', 'Item::update',['filter' => ['authFilter','tenantFilter']]);
     
     $routes->post('delete', 'Item::delete',['filter' => ['authFilter','tenantFilter']]);
-    $routes->get('getallcategory', 'Item::getAllItemCategory',['filter' => ['authFilter','tenantFilter']]); 
+    $routes->get('getallcategory', 'Item::getAllItemCategory',['filter' => ['tenantFilter']]); 
     $routes->post('createcategory', 'Item::createCategory',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('updatecategory', 'Item::updateCategory',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('deletecategory', 'Item::deleteCategory',['filter' => ['authFilter','tenantFilter']]);
 
-    $routes->get('getallunit', 'Item::getAllUnit',['filter' => ['authFilter','tenantFilter']]);
+    $routes->get('getallunit', 'Item::getAllUnit',['filter' => ['tenantFilter']]);
     $routes->get('getItemByItemTypeId/(:segment)', 'Item::getItemByItemTypeId/$1',['filter' => ['authFilter','tenantFilter']]);
 
 
@@ -314,7 +314,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     //Routes for order
     $routes->get('getall', 'Order::index',['filter' => ['authFilter', 'tenantFilter']]);
     $routes->post('getallpaging', 'Order::getOrdersPaging',['filter' => ['tenantFilter']]);
-    $routes->post('create', 'Order::create',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('create', 'Order::create',['filter' => ['tenantFilter']]);
     $routes->post('update', 'Order::update',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('delete', 'Order::delete',['filter' => ['authFilter','tenantFilter']]);
     $routes->get('getlastorder', 'Order::getLastOrder',['filter' => ['authFilter','tenantFilter']]);

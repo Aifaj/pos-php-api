@@ -4,52 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class OrderModel extends Model
+class CustomerModel extends Model
 {
-    protected $table            = 'order_mst';
-    protected $primaryKey       = 'orderId';
+    protected $table            = 'customer_mst';
+    protected $primaryKey       = 'customerId';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-protected $allowedFields = [
-    'orderId',
-    'orderNo',
-    'orderCode',
-    'mobileNo',
-    'email',
-    'address',
-    'orderDate',
-    'amount',
-    'discount',
-    'totalTax',
-    'totalItem',
-    'finalAmount',
-    'customerId',
-    'shippingAddressId',
-    'deliveryDate',
-    'orderTrackingNo',
-    'assignBy',
-    'totalItems', 
-    'totalPrice',
-    'total',
-    'isActive',
-    'isDeleted',
-    'createdBy',
-    'createdDate',
-    'modifiedBy',
-    'modifiedDate',
-    'businessNameFrom',
-    'phoneFrom',
-    'addressFrom',
-    'emailFrom',
-    'PanFrom',
-    'businessNameFor',
-    'phoneFor',
-    'addressFor',
-    'emailFor',
-    'PanCardFor'
-];
+    protected $allowedFields    = ['customerId', 'customerCode', 'profilePic','customerType', 'name', 'websiteUrl', 'contactPerson', 'gender', 'mobileNo', 'alternateMobileNo', 'dateOfBirth', 'emailId', 'modifiedBy', 'modifiedDate', 'createdBy', 'createdDate', 'isActive', 'isDeleted'];
+
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
@@ -63,7 +27,7 @@ protected $allowedFields = [
     protected $updatedField  = 'modifiedDate';
     protected $beforeInsert = ['addCreatedBy'];
     protected $beforeUpdate = ['addModifiedBy'];
-
+ 
     protected function addCreatedBy(array $data)
     {
         helper('jwt_helper'); // Ensure the JWT helper is loaded
@@ -73,7 +37,7 @@ protected $allowedFields = [
         }
         return $data;
     }
-
+ 
     protected function addModifiedBy(array $data)
     {
         helper('jwt_helper'); // Ensure the JWT helper is loaded
@@ -82,5 +46,5 @@ protected $allowedFields = [
             $data['data']['modifiedBy'] = $userId;
         }
         return $data;
-    }
-}
+    }}
+ 
