@@ -138,9 +138,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('getallpaging', 'Customer::getCustomersPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Customer::show/$1',['filter' => 'authFilter']);
     $routes->post('create', 'Customer::create',['filter' => ['tenantFilter']]);
-    $routes->post('update', 'Customer::update',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('update', 'Customer::update',['filter' => ['tenantFilter']]);
     $routes->get('getallwebsite', 'Customer::getCustomersWebsite',['filter' => ['tenantFilter']]); // Get all customer for website
-    $routes->post('delete', 'Customer::delete',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('delete', 'Customer::delete',['filter' => ['tenantFilter']]);
   });
    
   $routes->group('member', function ($routes) {
@@ -174,9 +174,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('getallpaging', 'Item::getItemsPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Item::show/$1',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('create', 'Item::create',['filter' => ['tenantFilter']]);
-    $routes->post('update', 'Item::update',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('update', 'Item::update',['filter' => ['tenantFilter']]);
     
-    $routes->post('delete', 'Item::delete',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('delete', 'Item::delete',['filter' => ['tenantFilter']]);
     $routes->get('getallcategory', 'Item::getAllItemCategory',['filter' => ['tenantFilter']]); 
     $routes->post('createcategory', 'Item::createCategory',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('updatecategory', 'Item::updateCategory',['filter' => ['authFilter','tenantFilter']]);

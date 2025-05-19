@@ -116,204 +116,213 @@ class Customer extends BaseController
         return $this->respond(["status" => true, "message" => "All Data Fetched", "data" => $customer], 200);
     }
 
-   public function create()
+ public function create()
 {
-    // Retrieve the input data from the request
-    $input = $this->request->getPost();
-    
-    // Define validation rules for required fields
-    $rules = [
-        'name' => ['rules' => 'required'],
-        'mobileNo' => ['rules' => 'required'],
-        'tenantName' => ['rules' => 'required'] // Assuming tenantName comes from post data now
-    ];
+    try {
+        // Retrieve the input data from the request
+        $input = $this->request->getPost();
 
-    if ($this->validate($rules)) {
+        // Define validation rules
+        $rules = [
+            'name' => ['rules' => 'required'],
+            'mobileNo' => ['rules' => 'required'],
+            'tenantName' => ['rules' => 'required'],
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->fail([
+                'status' => false,
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs',
+            ], 409);
+        }
+
         $tenantName = $input['tenantName'];
-
-        // Handle image upload for the profile picture
-        $profilePic = $this->request->getFile('profilePic');
+        $base64Image = $input['profilePic'] ?? null;
         $profilePicName = null;
 
-        if ($profilePic && $profilePic->isValid() && !$profilePic->hasMoved()) {
-            // Define the upload path for the profile picture
+        // Handle base64 image upload if provided
+        if ($base64Image && strpos($base64Image, 'base64') !== false) {
             $profilePicPath = FCPATH . 'uploads/' . $tenantName . '/customerImages/';
             if (!is_dir($profilePicPath)) {
-                mkdir($profilePicPath, 0777, true); // Create directory if it doesn't exist
+                mkdir($profilePicPath, 0777, true);
             }
 
-            // Move the file to the desired directory with a unique name
-            $profilePicName = $profilePic->getRandomName();
-            $profilePic->move($profilePicPath, $profilePicName);
+            // Split base64 string
+            [$typeInfo, $imageData] = explode(';base64,', $base64Image);
+            $imageType = str_replace('data:image/', '', $typeInfo);
+            $profilePicName = uniqid('profile_', true) . '.' . $imageType;
 
-            // Add the profilePic path to input
+            // Decode and save
+            $fullImagePath = $profilePicPath . $profilePicName;
+            file_put_contents($fullImagePath, base64_decode($imageData));
+
+            // Update path in input for DB
             $input['profilePic'] = $tenantName . '/customerImages/' . $profilePicName;
         }
 
+        // Connect to tenant DB
         $tenantService = new TenantService();
-        // Connect to the tenant's database
         $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+        // Insert into customer model
         $model = new CustomerModel($db);
         $model->insert($input);
 
         return $this->respond(['status' => true, 'message' => 'Customer Added Successfully'], 200);
-    } else {
-        // If validation fails, return the error messages
-        $response = [
+
+    } catch (\Throwable $e) {
+        return $this->fail([
             'status' => false,
-            'errors' => $this->validator->getErrors(),
-            'message' => 'Invalid Inputs',
-        ];
-        return $this->fail($response, 409);
+            'message' => 'Server Error: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
     }
 }
-
 
 
 
     public function update()
-    {
+{
+    try {
         $input = $this->request->getPost();
-        
-        // Validation rules for the vendor
+
+        // Validation rules
         $rules = [
-            'customerId' => ['rules' => 'required|numeric'], // Ensure vendorId is provided and is numeric
+            'customerId' => ['rules' => 'required|numeric'],
+            'name' => ['rules' => 'required'],
+            'mobileNo' => ['rules' => 'required'],
+            'tenantName' => ['rules' => 'required'],
         ];
 
-        // Validate the input
-        if ($this->validate($rules)) {
-            $tenantService = new TenantService();
-        // Connect to the tenant's database
+        if (!$this->validate($rules)) {
+            return $this->fail([
+                'status' => false,
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs',
+            ], 409);
+        }
+
+        $tenantService = new TenantService();
         $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
         $model = new CustomerModel($db);
 
-            // Retrieve the vendor by vendorId
-            $customerId = $input['customerId'];
-            $customer = $model->find($customerId); // Assuming find method retrieves the vendor
-            
-           
+        $customerId = $input['customerId'];
+        $customer = $model->find($customerId);
 
-
-            if (!$customer) {
-                return $this->fail(['status' => false, 'message' => 'Customer not found'], 404);
-            }
-
-            
-            $updateData = [
-                'name' => $input['name'],  // Corrected here
-                'customerCode' => $input['customerCode'],  // Corrected here
-                'mobileNo' => $input['mobileNo'],  // Corrected here
-                'alternateMobileNo' => $input['alternateMobileNo'],  // Corrected here
-                'emailId' => $input['emailId'],  // Corrected here
-                'dateOfBirth' => $input['dateOfBirth'],  // Corrected here
-                'gender' => $input['gender'],  // Corrected here
-
-                
-    
-            ];     
-
-            // Handle cover image update
-            $profilePic = $this->request->getFile('profilePic');
-            if ($profilePic && $profilePic->isValid() && !$profilePic->hasMoved()) {
-                // Handle cover image upload as in create() method
-                $key = "Exiaa@11";
-                $header = $this->request->getHeader("Authorization");
-                $token = null;
-    
-                // Extract the token from the header
-                if (!empty($header)) {
-                    if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
-                        $token = $matches[1];
-                    }
-                }
-    
-                $decoded = JWT::decode($token, new Key($key, 'HS256'));
-                $profilePicPath = FCPATH . 'uploads/' . $decoded->tenantName . '/customerImages/';
-    
-                // Create directory if it doesn't exist
-                if (!is_dir($profilePicPath)) {
-                    mkdir($profilePicPath, 0777, true);
-                }
-    
-                // Save the image and get the name
-                $profilePicName = $profilePic->getRandomName();
-                $profilePic->move($profilePicPath, $profilePicName);
-    
-                // Add the new cover image URL to the update data
-                $input['profilePic'] = $decoded->tenantName . '/customerImages/' . $profilePicName;
-                $updateData['profilePic'] = $input['profilePic'];  // Add cover image URL to update data
-            }
-
-
-            // Update the vendor with new data
-            $updated = $model->update($customerId, $updateData);
-
-
-            if ($updated) {
-                return $this->respond(['status' => true, 'message' => 'Vendor Updated Successfully'], 200);
-            } else {
-                return $this->fail(['status' => false, 'message' => 'Failed to update vendor'], 500);
-            }
-        } else {
-            // Validation failed
-            $response = [
-                'status' => false,
-                'errors' => $this->validator->getErrors(),
-                'message' => 'Invalid Inputs'
-            ];
-            return $this->fail($response, 409);
+        if (!$customer) {
+            return $this->fail(['status' => false, 'message' => 'Customer not found'], 404);
         }
+
+        $updateData = [
+            'name' => $input['name'] ?? '',
+            'customerCode' => $input['customerCode'] ?? '',
+            'mobileNo' => $input['mobileNo'] ?? '',
+            'alternateMobileNo' => $input['alternateMobileNo'] ?? '',
+            'emailId' => $input['emailId'] ?? '',
+            'dateOfBirth' => $input['dateOfBirth'] ?? '',
+            'gender' => $input['gender'] ?? '',
+        ];
+
+        $profilePicPath = FCPATH . 'uploads/' . $input['tenantName'] . '/customerImages/';
+        if (!is_dir($profilePicPath)) {
+            mkdir($profilePicPath, 0777, true);
+        }
+
+        // Handle base64 or file image upload
+        $base64Image = $input['profilePic'] ?? null;
+        $uploadedFile = $this->request->getFile('profilePic');
+
+        if ($base64Image && strpos($base64Image, 'base64') !== false) {
+            // Handle base64 image update
+            [$typeInfo, $imageData] = explode(';base64,', $base64Image);
+            $imageType = str_replace('data:image/', '', $typeInfo);
+            $profilePicName = uniqid('profile_', true) . '.' . $imageType;
+
+            $fullImagePath = $profilePicPath . $profilePicName;
+            file_put_contents($fullImagePath, base64_decode($imageData));
+
+            $updateData['profilePic'] = $input['tenantName'] . '/customerImages/' . $profilePicName;
+        } elseif ($uploadedFile && $uploadedFile->isValid() && !$uploadedFile->hasMoved()) {
+            // Handle file upload image update
+            $profilePicName = $uploadedFile->getRandomName();
+            $uploadedFile->move($profilePicPath, $profilePicName);
+
+            $updateData['profilePic'] = $input['tenantName'] . '/customerImages/' . $profilePicName;
+        }
+
+        $updated = $model->update($customerId, $updateData);
+
+        if ($updated) {
+            return $this->respond(['status' => true, 'message' => 'Customer Updated Successfully'], 200);
+        } else {
+            return $this->fail(['status' => false, 'message' => 'Failed to update customer'], 500);
+        }
+
+    } catch (\Throwable $e) {
+        return $this->fail([
+            'status' => false,
+            'message' => 'Server Error: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
     }
+}
 
 
 
 
-    public function delete()
+public function delete()
 {
-    $input = $this->request->getJSON();
+    $input = $this->request->getJSON(true); // true returns associative array
 
     // Validation rules for the customer
     $rules = [
-        'customerId' => ['rules' => 'required'], // Ensure customerId is provided
+        'customerId' => ['rules' => 'required'],
     ];
 
     // Validate the input
-    if ($this->validate($rules)) {
-        // Connect to the tenant's database
-        $tenantService = new TenantService();
-        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));   
-        $model = new CustomerModel($db);
-
-        // Retrieve the customer by customerId
-        $customerId = $input->customerId;
-        $customer = $model->where('customerId', $customerId)->where('isDeleted', 0)->first(); // Only find active customers
-
-        if (!$customer) {
-            return $this->fail(['status' => false, 'message' => 'Customer not found or already deleted'], 404);
-        }
-
-        // Perform a soft delete (mark as deleted instead of removing the record)
-        $updateData = [
-            'isDeleted' => 1,
-        ];
-        $deleted = $model->update($customerId, $updateData);
-        
-
-        if ($deleted) {
-            return $this->respond(['status' => true, 'message' => 'Customer marked as deleted'], 200);
-        } else {
-            return $this->fail(['status' => false, 'message' => 'Failed to delete customer'], 500);
-        }
-    } else {
+    if (!$this->validate($rules)) {
         // Validation failed
-        $response = [
+        return $this->fail([
             'status' => false,
             'errors' => $this->validator->getErrors(),
             'message' => 'Invalid Inputs'
-        ];
-        return $this->fail($response, 409);
+        ], 409);
+    }
+
+    $customerId = $input['customerId'];
+
+    // Connect to the tenant's database
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+    $model = new CustomerModel($db);
+
+    // Retrieve the customer
+    $customer = $model->where('customerId', $customerId)->where('isDeleted', 0)->first();
+
+    if (!$customer) {
+        return $this->fail([
+            'status' => false,
+            'message' => 'Customer not found or already deleted'
+        ], 404);
+    }
+
+    // Perform soft delete
+    $success = $model->update($customerId, ['isDeleted' => 1]);
+
+    if ($success) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Customer marked as deleted'
+        ], 200);
+    } else {
+        return $this->fail([
+            'status' => false,
+            'message' => 'Failed to delete customer'
+        ], 500);
     }
 }
+
 
 
     public function uploadPageProfile()
