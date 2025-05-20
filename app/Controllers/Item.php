@@ -8,6 +8,7 @@ use App\Models\ItemModel;
 use App\Models\ItemTypeModel;
 use App\Models\ItemCategory;
 use App\Models\Unit;
+use App\Models\Addon;
 use Config\Database;
 use App\Libraries\TenantService;
 use \Firebase\JWT\JWT;
@@ -64,6 +65,134 @@ class Item extends BaseController
         ];
         return $this->respond($response, 200);
     }
+
+public function getalladdons()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $itemModel = new Addon($db);
+
+    // Fetch only addons where isDeleted = 0
+    $addons = $itemModel->where('isDeleted', 0)->findAll();
+
+    $response = [
+        "status" => true,
+        "message" => "All Data Fetched",
+        "data" => $addons,
+    ];
+
+    return $this->respond($response, 200);
+}
+    
+
+    public function addAddon()
+    {
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+        $addonModel = new Addon($db);
+
+        // Get JSON input
+        $data = $this->request->getJSON(true);
+
+        // Validate required fields
+        if (!isset($data['addonName'], $data['price'])) {
+            return $this->respond([
+                'status' => false,
+                'message' => 'Required fields missing: addonName, price, or userId',
+            ], 400);
+        }
+
+        // Format and prepare the data
+        $insertData = [
+            'addonName'    => $data['addonName'],
+            'price'        => $data['price'],
+            'isActive'     => $data['isActive'] ?? 1,
+            'createdDate'  => date('Y-m-d H:i:s', strtotime($data['createdDate'] ?? 'now'))
+        ];
+
+        // Insert data
+        if ($addonModel->insert($insertData)) {
+            return $this->respond([
+                'status' => true,
+                'message' => 'Addon added successfully',
+                'data' => $insertData
+            ], 200);
+        } else {
+            return $this->respond([
+                'status' => false,
+                'message' => 'Failed to add addon',
+                'errors' => $addonModel->errors()
+            ], 500);
+        }
+    }
+
+    public function updateAddon()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $addonModel = new Addon($db);
+
+    // Get input data
+    $data = $this->request->getJSON(true);
+
+    // Validate that addonId is provided
+    if (!isset($data['addonId'])) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'addonId is required'
+        ], 400);
+    }
+
+    $addonId = $data['addonId'];
+
+    // Check if addon exists
+    $existingAddon = $addonModel->find($addonId);
+    if (!$existingAddon) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Addon not found'
+        ], 404);
+    }
+
+    // Prepare fields to update
+    $updateData = [];
+
+    if (isset($data['addonName'])) {
+        $updateData['addonName'] = $data['addonName'];
+    }
+
+    if (isset($data['price'])) {
+        $updateData['price'] = $data['price'];
+    }
+
+    if (isset($data['isActive'])) {
+        $updateData['isActive'] = $data['isActive'];
+    }
+
+    if (isset($data['isDeleted'])) {
+        $updateData['isDeleted'] = $data['isDeleted'];
+    }
+
+    $updateData['updatedDate'] = date('Y-m-d H:i:s');
+
+    // Perform the update
+    if ($addonModel->update($addonId, $updateData)) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Addon updated successfully',
+            'data' => $updateData
+        ], 200);
+    } else {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Failed to update addon',
+            'errors' => $addonModel->errors()
+        ], 500);
+    }
+}
 
     public function getItemsPaging()
     {
@@ -383,6 +512,10 @@ public function update()
                 'hsnCode' => $input['hsnCode'] ?? '',
                 'feature' => $input['feature'] ?? '',
                 'unitName' => $input['unitName'] ?? '',
+                'isAddons' => $input['isAddons'] ?? '',
+                'addons' => $input['addons'] ?? '',
+                'isPortion' => $input['isPortion'] ?? '',
+                'portion' => $input['portion'] ?? '',
             ];
 
             // Save cover image

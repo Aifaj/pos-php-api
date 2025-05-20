@@ -183,6 +183,12 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('deletecategory', 'Item::deleteCategory',['filter' => ['authFilter','tenantFilter']]);
 
     $routes->get('getallunit', 'Item::getAllUnit',['filter' => ['tenantFilter']]);
+    $routes->get('getalladdons', 'Item::getalladdons',['filter' => ['tenantFilter']]);
+    
+    $routes->post('addAddon', 'Item::addAddon',['filter' => ['tenantFilter']]);
+    $routes->post('updateAddon', 'Item::updateAddon',['filter' => ['tenantFilter']]);
+
+    
     $routes->get('getItemByItemTypeId/(:segment)', 'Item::getItemByItemTypeId/$1',['filter' => ['authFilter','tenantFilter']]);
 
 
