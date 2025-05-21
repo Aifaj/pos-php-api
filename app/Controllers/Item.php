@@ -670,156 +670,131 @@ public function update()
     }
     
 
-    public function createCategory()
-    {
-        // Retrieve the input data from the request
-        $input = $this->request->getPost();
+public function createCategory()
+{
+    // Retrieve normal input fields
+    $input = $this->request->getPost();
 
-        // Define validation rules for required fields
-        $rules = [
-            'itemCategoryName' => ['rules' => 'required'],
-        ];
+    // Define validation rules
+    $rules = [
+        'itemCategoryName' => ['rules' => 'required'],
+    ];
 
-        if ($this->validate($rules)) {
-            $key = "Exiaa@11";
-            $header = $this->request->getHeader("Authorization");
-            $token = null;
-    
-            // extract the token from the header
-            if(!empty($header)) {
-                if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
-                    $token = $matches[1];
-                }
-            }
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            // Handle image upload for the cover image
-            $coverImage = $this->request->getFile('coverImage');
-            $coverImageName = null;
+    if ($this->validate($rules)) {
+        // Extract tenant name from input
+        $tenantName = $input['tenantName'] ?? 'defaultTenant';
 
-            if ($coverImage && $coverImage->isValid() && !$coverImage->hasMoved()) {
-                // Define the upload path for the cover image
-                $coverImagePath = FCPATH . 'uploads/' . $decoded->tenantName . '/itemCategoryImages/';
-                if (!is_dir($coverImagePath)) {
-                    mkdir($coverImagePath, 0777, true); // Create directory if it doesn't exist
-                }
+        // Handle binary file upload
+        $coverImage = $this->request->getFile('coverImage');
+        if ($coverImage && $coverImage->isValid() && !$coverImage->hasMoved()) {
+            // Generate image name
+            $coverImageName = $coverImage->getRandomName();
 
-                // Move the file to the desired directory with a unique name
-                $coverImageName = $coverImage->getRandomName();
-                $coverImage->move($coverImagePath, $coverImageName);
-
-                // Get the URL of the uploaded cover image and remove the 'uploads/coverImages/' prefix
-                $coverImageUrl = 'uploads/itemCategoryImages/' . $coverImageName;
-                $coverImageUrl = str_replace('uploads/itemCategoryImages/', '', $coverImageUrl);
-
-                // Add the cover image URL to the input data
-                $input['coverImage'] = $decoded->tenantName . '/itemCategoryImages/' . $coverImageUrl; 
+            // Create folder if not exists
+            $coverImagePath = FCPATH . 'uploads/' . $tenantName . '/itemCategoryImages/';
+            if (!is_dir($coverImagePath)) {
+                mkdir($coverImagePath, 0777, true);
             }
 
-            // Insert the product data into the database
-            $tenantService = new TenantService();
-            // Connect to the tenant's database
-            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
-            $model = new ItemCategory($db);
-            log_message('error', print_r($input, true));
-            $itemCategory = $model->insert($input);
-            return $this->respond(["status" => true, "message" => "Item Category Added Successfully", "data" => $itemCategory], 200);
-        }else{
-            $response = [
-                'status' => false,
-                'errors' => $this->validator->getErrors(),
-                'message' => 'Invalid Inputs'
-            ];
-            return $this->fail($response, 409);
+            // Move uploaded file
+            $coverImage->move($coverImagePath, $coverImageName);
+
+            // Save relative path in DB
+            $input['coverImage'] = $tenantName . '/itemCategoryImages/' . $coverImageName;
         }
-            
-    }
 
-    public function updateCategory()
-    {
+        // Connect to the tenant database
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+        $model = new ItemCategory($db);
+
+        // Save to database
+        $itemCategory = $model->insert($input);
+
+        return $this->respond([
+            "status" => true,
+            "message" => "Item Category Added Successfully",
+            "data" => $itemCategory
+        ], 200);
+    } else {
+        return $this->fail([
+            'status' => false,
+            'errors' => $this->validator->getErrors(),
+            'message' => 'Invalid Inputs'
+        ], 409);
+    }
+}
+
+   public function updateCategory()
+{
+    try {
         $input = $this->request->getPost();
-    
-        // Validation rules for the item
+
         $rules = [
-            'itemCategoryId' => ['rules' => 'required|numeric'], // Ensure itemId is provided and is numeric
+            'itemCategoryId' => ['rules' => 'required|numeric'],
+            'itemCategoryName' => ['rules' => 'required']
         ];
-    
-        // Validate the input
+
         if ($this->validate($rules)) {
-            // Insert the product data into the database
+            $tenantName = $input['tenantName'] ?? 'defaultTenant';
+
+            // Get tenant DB connection
             $tenantService = new TenantService();
             $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
-    
+
             $model = new ItemCategory($db);
-    
-            // Retrieve the item by itemId
             $itemCategoryId = $input['itemCategoryId'];
-            $item = $model->find($itemCategoryId);
-    
-            if (!$item) {
+
+            $existingItem = $model->find($itemCategoryId);
+            if (!$existingItem) {
                 return $this->fail(['status' => false, 'message' => 'Item not found'], 404);
             }
-    
-            // Prepare the data to be updated
-                $updateData = [
-                    'itemCategoryName'=> $input['itemCategoryName'],	
-                    'gstTax'=> $input['gstTax'],
-                    'itemTypeId'=> $input['itemTypeId'],				
-                    'description'=> $input['description'],	
-                    'hsnCode'=> $input['hsnCode'],
-                ];
-    
-                    // Handle cover image update as base64
-                    if (isset($input['coverImage']) && !empty($input['coverImage'])) {
-                        $coverImageData = base64_decode(preg_replace('#^data:image/png;base64,#i', '', $input['coverImage']));
-    
-                        // Handle cover image upload
-                        $key = "Exiaa@11";
-                        $header = $this->request->getHeader("Authorization");
-                        $token = null;
-    
-                        // Extract the token from the header
-                        if (!empty($header)) {
-                            if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
-                                $token = $matches[1];
-                            }
-                        }
-    
-                        $decoded = JWT::decode($token, new Key($key, 'HS256'));
-                        $coverImagePath = FCPATH . 'uploads/' . $decoded->tenantName . '/itemImages/';
-    
-                        if (!is_dir($coverImagePath)) {
-                            mkdir($coverImagePath, 0777, true);
-                        }
-    
-                        $coverImageName = uniqid() . '.png'; // Ensure the file extension is .png
-                        file_put_contents($coverImagePath . $coverImageName, $coverImageData);
-    
-                        $input['coverImage'] = $decoded->tenantName . '/itemImages/' . $coverImageName;
-                        $updateData['coverImage'] = $input['coverImage'];
-                    }
-    
-                
-    
-    
-            // Update the item with new data
+
+            $updateData = [
+                'itemCategoryName' => $input['itemCategoryName'] ?? $existingItem['itemCategoryName'],
+                'description'      => $input['description'] ?? $existingItem['description'],
+            ];
+
+            $coverImage = $this->request->getFile('coverImage');
+            if ($coverImage && $coverImage->isValid() && !$coverImage->hasMoved()) {
+                $coverImageName = $coverImage->getRandomName();
+                $coverImagePath = FCPATH . 'uploads/' . $tenantName . '/itemCategoryImages/';
+
+                if (!is_dir($coverImagePath)) {
+                    mkdir($coverImagePath, 0777, true);
+                }
+
+                $coverImage->move($coverImagePath, $coverImageName);
+                $updateData['coverImage'] = $tenantName . '/itemCategoryImages/' . $coverImageName;
+            }
+
             $updated = $model->update($itemCategoryId, $updateData);
-    
+
             if ($updated) {
-                return $this->respond(['status' => true, 'message' => 'Item Updated Successfully'], 200);
+                return $this->respond(['status' => true, 'message' => 'Item Category Updated Successfully'], 200);
             } else {
-                return $this->fail(['status' => false, 'message' => 'Failed to update item'], 500);
+                echo "<pre>Update failed: ";
+                print_r($db->error());
+                echo "</pre>";
+                exit;
             }
         } else {
-            // Validation failed
-            $response = [
-                'status' => false,
-                'errors' => $this->validator->getErrors(),
-                'message' => 'Invalid Inputs'
-            ];
-            return $this->fail($response, 409);
+            echo "<pre>Validation Failed:\n";
+            print_r($this->validator->getErrors());
+            echo "</pre>";
+            exit;
         }
+    } catch (\Throwable $e) {
+        echo "<pre>Caught Exception:\n";
+        print_r($e->getMessage());
+        echo "\nFile: " . $e->getFile();
+        echo "\nLine: " . $e->getLine();
+        echo "\nTrace:\n" . $e->getTraceAsString();
+        echo "</pre>";
+        exit;
     }
+}
+
 
     public function deleteCategory()
     {
