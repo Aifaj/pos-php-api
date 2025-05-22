@@ -19,6 +19,7 @@ class CustomerPaymentDetails extends Model
         'AddressId',
         'totalAmount',
         'balanceAmmount',
+        'transaction',
         'paidAmount',
         'isActive',
         'isDeleted',

@@ -143,8 +143,6 @@ public function getOrdersPaging()
         $rules = [
             'orderNo' => ['rules' => 'required'],
             'orderDate' => ['rules' => 'required'],
-            'customerId' => ['rules' => 'required'],
-            'customerAddressId' => ['rules' => 'required'],
         ];
 
         if (!$this->validate($rules)) {
@@ -170,11 +168,13 @@ public function getOrdersPaging()
         $orderData = [
             'orderNo' => $input->orderNo,
             'orderDate' => $input->orderDate,
-            'customerId' => $input->customerId,
-            'customerAddressId' => $input->customerAddressId,
+            'orderStatus' => 'Pending',
+            'customerId' => $input->customerId ?? null,
+            'customerAddressId' => $input->customerAddressId ?? null,
             'finalAmount' => $input->total ?? 0,
             'shippingCost' => $input->shippingCost ?? 0,
             'totalItem' => $input->totalItem ?? count($items),
+            'items' => json_encode($items),
             'totalTax' => json_encode($taxData),
             'discount' => json_encode($discountData),
         ];
@@ -188,16 +188,17 @@ public function getOrdersPaging()
         // Insert into customer_payment_details
         $paymentData = [
             'customerId' => $input->customerId,
-            'customerName' => $input->customerName ?? '',
+            'customerName' => $input->customerName ?? 'Running Customer',
             'AddressId' => $input->customerAddressId,
-            'totalAmount' => $input->total ?? 0,
-            'balanceAmmount' => 0,
-            'paidAmount' => $input->total ?? 0,
+            'totalAmount' => $input->transaction->totalAmount ?? 0,
+            'balanceAmmount' => $input->transaction->balanceAmount ?? 0,
+            'paidAmount' => $input->transaction->payingAmount ?? 0,
+            'transaction'=> json_encode($input->transaction),
             'isActive' => 1,
             'isDeleted' => 0,
-            'createdDate' => date('Y-m-d H:i:s'),
+            'createdDate' => $input->orderDate,
             'createdBy' => $this->request->getHeaderLine('X-User-Id') ?? null,
-            'modifiedDate' => date('Y-m-d H:i:s'),
+            'modifiedDate' => $input->orderDate,
             'modifiedBy' => $this->request->getHeaderLine('X-User-Id') ?? null,
         ];
 
