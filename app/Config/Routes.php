@@ -141,6 +141,8 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('update', 'Customer::update',['filter' => ['tenantFilter']]);
     $routes->get('getallwebsite', 'Customer::getCustomersWebsite',['filter' => ['tenantFilter']]); // Get all customer for website
     $routes->post('delete', 'Customer::delete',['filter' => ['tenantFilter']]);
+    $routes->post('getCustomerAddress', 'Customer::getCustomerAddress',['filter' => ['tenantFilter']]);
+
   });
    
   $routes->group('member', function ($routes) {

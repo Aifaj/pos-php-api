@@ -8,6 +8,7 @@ use App\Models\OrderModel;
 use App\Models\OrderDetailModel;
 use App\Models\ItemModel;
 use App\Libraries\TenantService;
+use App\Models\CustomerPaymentDetails;
 
 use Config\Database;
 
@@ -133,17 +134,17 @@ public function getOrdersPaging()
         return $this->respond(["status" => true, "message" => "All Data Fetched", "data" => $OrderModel], 200);
     }
 
- 
-
-  public function create()
+ public function create()
 {
     try {
         $input = $this->request->getJSON();
 
-        // Validate required fields
+        // Basic validation
         $rules = [
             'orderNo' => ['rules' => 'required'],
             'orderDate' => ['rules' => 'required'],
+            'customerId' => ['rules' => 'required'],
+            'customerAddressId' => ['rules' => 'required'],
         ];
 
         if (!$this->validate($rules)) {
@@ -158,34 +159,24 @@ public function getOrdersPaging()
         $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
         $model = new OrderModel($db);
-        $itemDetailsModel = new OrderDetailModel($db);
+        $paymentModel = new CustomerPaymentDetails($db); 
 
-        // Decode items if they are a JSON string
+        // Decode JSON fields if sent as strings
         $items = is_string($input->items) ? json_decode($input->items) : $input->items;
+        $taxData = is_string($input->totalTax) ? json_decode($input->totalTax) : $input->totalTax;
+        $discountData = is_string($input->discount) ? json_decode($input->discount) : $input->discount;
 
-        // Ensure shippingCost is numeric
-        $shippingCost = isset($input->shippingCost) ? floatval($input->shippingCost) : 0;
-
-        // Calculate total if not already
-        $total = isset($input->total) ? round(floatval($input->total), 2) : 0;
-
-        // Order payload
+        // Prepare data for order
         $orderData = [
             'orderNo' => $input->orderNo,
             'orderDate' => $input->orderDate,
-            'businessNameFor' => $input->businessNameFor ?? null,
-            'email' => $input->email ?? null,
-            'mobileNo' => $input->mobileNo ?? null,
-            'addressFor' => $input->addressFor ?? null,
-            'phoneFor' => $input->phoneFor ?? null,
-            'emailFor' => $input->emailFor ?? null,
-            'PanCardFor' => $input->PanCardFor ?? null,
-            'finalAmount' => $total,
-            'shippingCost' => $shippingCost,
+            'customerId' => $input->customerId,
+            'customerAddressId' => $input->customerAddressId,
+            'finalAmount' => $input->total ?? 0,
+            'shippingCost' => $input->shippingCost ?? 0,
             'totalItem' => $input->totalItem ?? count($items),
-            'totalTax' => $input->totalTax ?? null,
-            'discount' => $input->discount ?? null,
-            'items' => $input->items
+            'totalTax' => json_encode($taxData),
+            'discount' => json_encode($discountData),
         ];
 
         $orderId = $model->insert($orderData);
@@ -194,23 +185,32 @@ public function getOrdersPaging()
             return $this->respond(['status' => false, 'message' => 'Failed to create the Order'], 500);
         }
 
-        // Insert order items
-        foreach ($items as $item) {
-            $itemData = [
-                'orderId' => $orderId,
-                'itemId' => $item->itemId,
-                'quantity' => $item->quantity,
-                'rate' => $item->finalPrice ?? 0,
-                'amount' => $item->totalPrice ?? 0
-            ];
-            $itemDetailsModel->insert($itemData);
-        }
+        // Insert into customer_payment_details
+        $paymentData = [
+            'customerId' => $input->customerId,
+            'customerName' => $input->customerName ?? '',
+            'AddressId' => $input->customerAddressId,
+            'totalAmount' => $input->total ?? 0,
+            'balanceAmmount' => 0,
+            'paidAmount' => $input->total ?? 0,
+            'isActive' => 1,
+            'isDeleted' => 0,
+            'createdDate' => date('Y-m-d H:i:s'),
+            'createdBy' => $this->request->getHeaderLine('X-User-Id') ?? null,
+            'modifiedDate' => date('Y-m-d H:i:s'),
+            'modifiedBy' => $this->request->getHeaderLine('X-User-Id') ?? null,
+        ];
 
-        return $this->respond(['status' => true, 'message' => 'Order and items added successfully'], 200);
+        $paymentModel->insert($paymentData);
+
+        return $this->respond([
+            'status' => true,
+            'message' => 'Order and payment added successfully',
+            'orderId' => $orderId
+        ], 200);
 
     } catch (\Exception $e) {
         log_message('error', 'Order Create Error: ' . $e->getMessage());
-        log_message('error', 'Trace: ' . $e->getTraceAsString());
 
         return $this->fail([
             'status' => false,
@@ -219,6 +219,91 @@ public function getOrdersPaging()
         ], 500);
     }
 }
+
+//   public function create()
+// {
+//     try {
+//         $input = $this->request->getJSON();
+
+//         // Validate required fields
+//         $rules = [
+//             'orderNo' => ['rules' => 'required'],
+//             'orderDate' => ['rules' => 'required'],
+//         ];
+
+//         if (!$this->validate($rules)) {
+//             return $this->fail([
+//                 'status' => false,
+//                 'errors' => $this->validator->getErrors(),
+//                 'message' => 'Invalid Inputs'
+//             ], 409);
+//         }
+
+//         $tenantService = new TenantService();
+//         $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+//         $model = new OrderModel($db);
+//         $itemDetailsModel = new OrderDetailModel($db);
+
+//         // Decode items if they are a JSON string
+//         $items = is_string($input->items) ? json_decode($input->items) : $input->items;
+
+//         // Ensure shippingCost is numeric
+//         $shippingCost = isset($input->shippingCost) ? floatval($input->shippingCost) : 0;
+
+//         // Calculate total if not already
+//         $total = isset($input->total) ? round(floatval($input->total), 2) : 0;
+
+//         // Order payload
+//         $orderData = [
+//             'orderNo' => $input->orderNo,
+//             'orderDate' => $input->orderDate,
+//             'businessNameFor' => $input->businessNameFor ?? null,
+//             'email' => $input->email ?? null,
+//             'mobileNo' => $input->mobileNo ?? null,
+//             'addressFor' => $input->addressFor ?? null,
+//             'phoneFor' => $input->phoneFor ?? null,
+//             'emailFor' => $input->emailFor ?? null,
+//             'PanCardFor' => $input->PanCardFor ?? null,
+//             'finalAmount' => $total,
+//             'shippingCost' => $shippingCost,
+//             'totalItem' => $input->totalItem ?? count($items),
+//             'totalTax' => $input->totalTax ?? null,
+//             'discount' => $input->discount ?? null,
+//             'items' => $input->items
+//         ];
+
+//         $orderId = $model->insert($orderData);
+
+//         if (!$orderId) {
+//             return $this->respond(['status' => false, 'message' => 'Failed to create the Order'], 500);
+//         }
+
+//         // Insert order items
+//         foreach ($items as $item) {
+//             $itemData = [
+//                 'orderId' => $orderId,
+//                 'itemId' => $item->itemId,
+//                 'quantity' => $item->quantity,
+//                 'rate' => $item->finalPrice ?? 0,
+//                 'amount' => $item->totalPrice ?? 0
+//             ];
+//             $itemDetailsModel->insert($itemData);
+//         }
+
+//         return $this->respond(['status' => true, 'message' => 'Order and items added successfully'], 200);
+
+//     } catch (\Exception $e) {
+//         log_message('error', 'Order Create Error: ' . $e->getMessage());
+//         log_message('error', 'Trace: ' . $e->getTraceAsString());
+
+//         return $this->fail([
+//             'status' => false,
+//             'message' => 'Internal Server Error',
+//             'error' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 
     // public function update()

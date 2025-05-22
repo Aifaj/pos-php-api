@@ -4,58 +4,46 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class OrderModel extends Model
+class CustomerPaymentDetails extends Model
 {
-    protected $table            = 'order_mst';
-    protected $primaryKey       = 'orderId';
+    protected $table            = 'customer_payment_details';
+    protected $primaryKey       = 'customePaymentId';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-protected $allowedFields = [
-   'orderId',
-        'orderNo',
-        'orderCode',
-        'orderDate',
-        'items',
+
+    protected $allowedFields    = [
         'customerId',
-        'customerAddressId',
-        'amount',
-        'discount',
-        'totalTax',
-        'totalItem',
-        'totalPrice',
-        'total',
-        'finalAmount',
-        'shippingAddressId',
-        'shippingCost',
-        'deliveryDate',
-        'orderTrackingNo',
-        'assignBy',
+        'customerName',
+        'AddressId',
+        'totalAmount',
+        'balanceAmmount',
+        'paidAmount',
         'isActive',
         'isDeleted',
-        'createdBy',
         'createdDate',
-        'modifiedBy',
-        'modifiedDate'
-];
+        'createdBy',
+        'modifiedDate',
+        'modifiedBy'
+    ];
+
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    protected array $casts = [];
-    protected array $castHandlers = [];
-
-    // Dates
+    // Timestamps
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'createdDate';
     protected $updatedField  = 'modifiedDate';
+
+    // Auto-add createdBy and modifiedBy
     protected $beforeInsert = ['addCreatedBy'];
     protected $beforeUpdate = ['addModifiedBy'];
 
     protected function addCreatedBy(array $data)
     {
-        helper('jwt_helper'); // Ensure the JWT helper is loaded
+        helper('jwt_helper');
         $userId = getUserIdFromToken();
         if ($userId) {
             $data['data']['createdBy'] = $userId;
@@ -65,7 +53,7 @@ protected $allowedFields = [
 
     protected function addModifiedBy(array $data)
     {
-        helper('jwt_helper'); // Ensure the JWT helper is loaded
+        helper('jwt_helper');
         $userId = getUserIdFromToken();
         if ($userId) {
             $data['data']['modifiedBy'] = $userId;

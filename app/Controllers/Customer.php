@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\CustomerModel;
+use App\Models\CustomerAddress;
 use Config\Database;
 use App\Libraries\TenantService;
 use \Firebase\JWT\JWT;
@@ -368,4 +369,40 @@ public function delete()
             'data' => $data,
         ]);
     }
+
+
+
+    
+
+    public function getCustomerAddress()
+{
+    $input = $this->request->getJSON();
+
+    if (!isset($input->customerId)) {
+        return $this->respond(["status" => false, "message" => "customerId is required"], 400);
+    }
+
+    // Get tenant DB connection
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    // Load model with tenant DB
+    $model = new \App\Models\CustomerAddress($db);
+
+    // Fetch addresses filtered by customerId
+    $addresses = $model
+        ->where('customerId', $input->customerId)
+        ->where('isDeleted', 0) // Optional: if soft delete field is used
+        ->findAll();
+
+    return $this->respond([
+        "status" => true,
+        "message" => "Customer addresses fetched",
+        "data" => $addresses
+    ], 200);
+}
+
+
+
+
 }
