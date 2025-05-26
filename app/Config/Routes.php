@@ -142,6 +142,13 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->get('getallwebsite', 'Customer::getCustomersWebsite',['filter' => ['tenantFilter']]); // Get all customer for website
     $routes->post('delete', 'Customer::delete',['filter' => ['tenantFilter']]);
     $routes->post('getCustomerAddress', 'Customer::getCustomerAddress',['filter' => ['tenantFilter']]);
+    $routes->get('getAllCustomerAddress', 'Customer::getAllCustomerAddress',['filter' => ['tenantFilter']]);
+    $routes->post('updateAddress', 'Customer::updateAddress',['filter' => ['tenantFilter']]);
+    $routes->post('deleteAddress', 'Customer::deleteAddress',['filter' => ['tenantFilter']]);
+    $routes->post('addCustomerAddress', 'Customer::addCustomerAddress',['filter' => ['tenantFilter']]);
+
+
+    
 
   });
    

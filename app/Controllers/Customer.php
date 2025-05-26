@@ -403,6 +403,232 @@ public function delete()
 }
 
 
+public function getAllCustomerAddress()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $itemModel = new CustomerAddress($db);
+
+    // Fetch only addons where isDeleted = 0
+    $address = $itemModel->where('isDeleted', 0)->findAll();
+
+    $response = [
+        "status" => true,
+        "message" => "All Data Fetched",
+        "data" => $address,
+    ];
+
+    return $this->respond($response, 200);
+}
 
 
+   public function addCustomerAddress()
+    {
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+        $customerAddressModel = new CustomerAddress($db);
+
+        // Get JSON input
+
+        $data = $this->request->getJSON(true);
+
+        // Validate required fields
+        if (!isset($data['customerId']) ||
+    !isset($data['mobileNo']) ||
+    !isset($data['pincode']) ||
+    !isset($data['addressLine1'])
+) {
+    return $this->respond([
+        'status' => false,
+        'message' => 'Required fields missing: customerId, fullName, mobileNo, pincode, addressLine1, or createdBy',
+    ], 400); // Bad Request
+}
+
+        // Format and prepare the data
+        $insertData = [
+            'customerId'        => $data['customerId'],
+            'fullName'          => $data['fullName'],
+            'mobileNo'          => $data['mobileNo'],
+            'pincode'           => $data['pincode'],
+            'addressLine1'      => $data['addressLine1'],
+            'addressLine2'      => $data['addressLine2'] ?? '',
+            'landmark'          => $data['landmark'] ?? '',
+            'city'              => $data['city'] ?? '',
+            'state'             => $data['state'] ?? '',
+            'country'           => $data['country'] ?? '',
+            'deliveryInstruction' => $data['deliveryInstruction'] ?? '',
+            'isActive'          => $data['isActive'] ?? 1, // isActive can still be passed from frontend if needed
+            'isDeleted'         => 0, // This is a fixed value, keep it
+        ];
+
+        // Insert data
+        if ($customerAddressModel->insert($insertData)) {
+            return $this->respond([
+                'status' => true,
+                'message' => 'Address added successfully',
+                'data' => $insertData
+            ], 200);
+        } else {
+            return $this->respond([
+                'status' => false,
+                'message' => 'Failed to add address',
+                'errors' => $customerAddressModel->errors()
+            ], 500);
+        }
+    }
+
+    public function updateAddress()
+    {
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+    
+        $customerAddressModel = new CustomerAddress($db);
+    
+        // Get input data
+        $data = $this->request->getJSON(true);
+    
+        // Validate that customeraddressId is provided
+        if (!isset($data['customerId'])) {
+            return $this->respond([
+                'status' => false,
+                'message' => 'addressId is required'
+            ], 400);
+           
+        }
+    
+        $customerAddressId = $data['customerId'];
+
+    
+        // Check if addon exists
+        $existingAddress = $customerAddressModel->find($customerAddressId);
+        if (!$existingAddress) {
+            return $this->respond([
+                'status' => false,
+                'message' => 'Address not found'
+            ], 404);
+        }
+    
+        // Prepare fields to update
+        $updateData = [];
+    
+        if (isset($data['firstName'])) {
+            $updateData['firstName'] = $data['firstName'];
+        }
+        if (isset($data['mobileNo'])) {
+            $updateData['mobileNo'] = $data['mobileNo'];
+        }
+    
+        if (isset($data['pincode'])) {
+            $updateData['pincode'] = $data['pincode'];
+        }
+    
+        if (isset($data['addressLine1'])) {
+            $updateData['addressLine1'] = $data['addressLine1'];
+        }
+        if (isset($data['addressLine2'])) {
+            $updateData['addressLine2'] = $data['addressLine2'];
+        }
+        if (isset($data['landmark'])) {
+            $updateData['landmark'] = $data['landmark'];
+        }
+        if (isset($data['city'])) {
+            $updateData['city'] = $data['city'];
+        }
+        if (isset($data['state'])) {
+            $updateData['state'] = $data['state'];
+        }
+        if (isset($data['country'])) {
+            $updateData['country'] = $data['country'];
+        }
+        if (isset($data['deliveryInstruction'])) {
+            $updateData['deliveryInstruction'] = $data['deliveryInstruction'];
+        }
+        if (isset($data['customerId'])) {
+            $updateData['customerId'] = $data['customerId'];
+        }
+        if (isset($data['isActive'])) {
+            $updateData['isActive'] = $data['isActive'];
+        }
+    
+        if (isset($data['isDeleted'])) {
+            $updateData['isDeleted'] = $data['isDeleted'];
+        }
+        if (isset($data['createdDate'])) {
+            $updateData['createdDate'] = date('Y-m-d H:i:s', strtotime($data['createdDate']));
+        }
+        if (isset($data['modifiedDate'])) {
+            $updateData['modifiedDate'] = date('Y-m-d H:i:s', strtotime($data['modifiedDate']));
+        }
+        if (isset($data['createdBy'])) {
+            $updateData['createdBy'] = $data['createdBy'];
+        }
+        if (isset($data['modifiedBy'])) {
+            $updateData['modifiedBy'] = $data['modifiedBy'];
+        }
+    
+
+    
+        // Perform the update
+        if ($customerAddressModel->update($customerAddressId, $updateData)) {
+            return $this->respond([
+                'status' => true,
+                'message' => 'Address updated successfully',
+                'data' => $updateData
+            ], 200);
+        } else {
+            return $this->respond([
+                'status' => false,
+                'message' => 'Failed to update address',
+                'errors' => $customerAddressModel->errors()
+            ], 500);
+        }
+    }
+
+
+    public function deleteAddress()
+    {
+        $input = $this->request->getJSON();
+    
+        // Validation rules
+        $rules = [
+            'customerAddressId' => ['rules' => 'required'],
+        ];
+    
+        if ($this->validate($rules)) {
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+            $model = new CustomerAddress($db);
+    
+            // Retrieve the address
+            $customerAddressId = $input->customerAddressId;
+            $address = $model->find($customerAddressId);
+    
+            if (!$address) {
+                return $this->fail(['status' => false, 'message' => 'Address not found'], 404);
+            }
+    
+            // Soft delete
+            $updateData = [
+                'isDeleted' => 1,
+            ];
+            $deleted = $model->update($customerAddressId, $updateData);
+    
+            if ($deleted) {
+                return $this->respond(['status' => true, 'message' => 'Address Deleted Successfully'], 200);
+            } else {
+                return $this->fail(['status' => false, 'message' => 'Failed to delete address'], 500);
+            }
+        } else {
+            // Validation failed
+            $response = [
+                'status' => false,
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs',
+            ];
+            return $this->fail($response, 409);
+        }
+    }
+    
 }
