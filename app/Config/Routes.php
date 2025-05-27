@@ -41,6 +41,12 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('update', 'User::update/$1',['filter' => 'authFilter']); 
     $routes->post('delete', 'User::delete',['filter' => 'authFilter']); 
     $routes->post('login', 'User::login');
+    
+    $routes->post('addRestaurantDetails', 'User::addRestaurantDetails',['filter' => 'authFilter']);
+    $routes->post('updateRestaurantDetails', 'User::updateRestaurantDetails',['filter' => 'authFilter']);
+    $routes->get('getAllRestaurantDetails', 'User::getAllRestaurantDetails',['filter' => 'authFilter']);
+
+    
     $routes->get('profile', 'User::profile',['filter' => 'authFilter']);
     $routes->get('usermenu', 'User::menu',['filter' => 'authFilter']);
     $routes->post('register', 'User::register');

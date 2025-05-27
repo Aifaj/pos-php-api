@@ -11,6 +11,7 @@ use App\Models\RightModel;
 use App\Models\RoleModel;
 use App\Models\BusinessModel;
 use App\Models\BusinessCategoryModel;
+use App\Models\RestaurantDetails;
 
 use App\Libraries\TenantService;
 use App\Models\TenantUserModel;
@@ -1157,5 +1158,127 @@ public function assignBusiness()
     return $this->respond(["status" => true, "message" => "Business Assigned Successfully", "data" => []], 200);
 
 }
+
+
+
+public function addRestaurantDetails()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $restaurantModel = new RestaurantDetails($db);
+
+    // Get JSON input
+    $data = $this->request->getJSON(true);
+
+    // Validate required fields
+    if (!isset($data['resTitle'], $data['resName'], $data['resAddress'], $data['resContactNo'])) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Required fields missing: resTitle, resName, resAddress, or resContactNo',
+        ], 400);
+    }
+
+    // Prepare data for insert
+    $insertData = [
+        'resTitle'       => $data['resTitle'],
+        'resName'        => $data['resName'],
+        'resAddress'     => $data['resAddress'],
+        'resContactNo'   => $data['resContactNo'],
+        'resTrn'         => $data['resTrn'] ?? null,
+        'resLogo'  => $data['resLogo'] ?? null,  // store base64 string directly, or handle separately if needed
+        'isActive'       => $data['isActive'] ?? 1,
+        'createdDate'    => date('Y-m-d H:i:s', strtotime($data['createdDate'] ?? 'now')),
+    ];
+
+    // Insert data into DB
+    if ($restaurantModel->insert($insertData)) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Restaurant details added successfully',
+            'data' => $insertData
+        ], 200);
+    } else {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Failed to add restaurant details',
+            'errors' => $restaurantModel->errors()
+        ], 500);
+    }
+}
+
+
+public function updateRestaurantDetails($resId = null)
+{
+    if (!$resId) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Restaurant ID is required for update',
+        ], 400);
+    }
+
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $restaurantModel = new RestaurantDetails($db);
+
+    // Check if the restaurant exists
+    $existing = $restaurantModel->find($resId);
+    if (!$existing) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Restaurant not found',
+        ], 404);
+    }
+
+    // Get JSON input
+    $data = $this->request->getJSON(true);
+
+    // Prepare data to update - only update fields sent in request
+    $updateData = [];
+
+    $fields = ['resTitle', 'resName', 'resAddress', 'resContactNo', 'resTrn', 'resLogo', 'isActive', 'modifiedDate', 'modifiedBy'];
+    foreach ($fields as $field) {
+        if (isset($data[$field])) {
+            $updateData[$field] = $data[$field];
+        }
+    }
+
+    // If modifiedDate not set, set to now
+    if (!isset($updateData['modifiedDate'])) {
+        $updateData['modifiedDate'] = date('Y-m-d H:i:s');
+    }
+
+    if ($restaurantModel->update($resId, $updateData)) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Restaurant details updated successfully',
+            'data' => $updateData
+        ], 200);
+    } else {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Failed to update restaurant details',
+            'errors' => $restaurantModel->errors()
+        ], 500);
+    }
+}
+
+
+public function getAllRestaurantDetails()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $restaurantModel = new RestaurantDetails($db);
+
+    $restaurants = $restaurantModel->where('isDeleted', 0)->findAll();
+
+    return $this->respond([
+        'status' => true,
+        'data' => $restaurants
+    ], 200);
+}
+
 
 }
