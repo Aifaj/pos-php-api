@@ -622,5 +622,114 @@ class Order extends BaseController
 }
 
 
+
+// public function updateOrderStatus()
+// {
+//     // Get input from JSON request body
+//     $input = $this->request->getJSON();
+
+//     // Validate required fields
+//     $rules = [
+//         'orderId' => 'required|numeric',
+//         'orderStatus' => 'required|string',
+//     ];
+
+//     if (!$this->validate($rules)) {
+//         return $this->fail([
+//             'status' => false,
+//             'errors' => $this->validator->getErrors(),
+//             'message' => 'Invalid Inputs'
+//         ], 409);
+//     }
+
+//     // Get tenant-specific DB configuration
+//     $tenantService = new TenantService();
+//     $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+//     // Instantiate the model
+//     $OrderModel = new OrderModel($db);
+
+//     // Find the order
+//     $order = $OrderModel->find($input->orderId);
+//     if (!$order) {
+//         return $this->fail([
+//             'status' => false,
+//             'message' => 'Order not found'
+//         ], 404);
+//     }
+
+//     // Update only the status field
+//     $updated = $OrderModel->update($input->orderId, [
+//         'orderStatus' => $input->orderStatus
+//     ]);
+
+//     if (!$updated) {
+//         return $this->fail([
+//             'status' => false,
+//             'message' => 'Failed to update order status'
+//         ], 500);
+//     }
+
+//     return $this->respond([
+//         'status' => true,
+//         'message' => 'Order status updated successfully'
+//     ], 200);
+// }
+
+
+public function updateOrderStatus()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $orderModel = new OrderModel($db);
+
+    // Get input data
+    $data = $this->request->getJSON(true);
+
+
+    $orderId = $data['orderId'];
+
+
+    // Check if addon exists
+    $existingOrder = $orderModel->find($orderId);
+    if (!$existingOrder) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Order not found'
+        ], 404);
+    }
+
+    // Prepare fields to update
+    $updateData = [];
+
+    if (isset($data['orderId'])) {
+        $updateData['orderId'] = $data['orderId'];
+    }
+    if (isset($data['orderNo'])) {
+        $updateData['orderNo'] = $data['orderNo'];
+    }
+
+    if (isset($data['orderStatus'])) {
+        $updateData['orderStatus'] = $data['orderStatus'];
+    }
+
+    
+    // Perform the update
+    if ($orderModel->update($orderId, $updateData)) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Order updated successfully',
+            'data' => $updateData
+        ], 200);
+    } else {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Failed to update address',
+            'errors' => $orderModel->errors()
+        ], 500);
+    }
+}
+
     
 }

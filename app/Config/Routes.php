@@ -339,9 +339,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('update', 'Order::update',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('delete', 'Order::delete',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('getAllCustomerTransactionByCustomerId', 'Order::getAllCustomerTransactionByCustomerId',['filter' => ['tenantFilter']]);
-
-    
     $routes->get('getlastorder', 'Order::getLastOrder',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('updateOrderStatus', 'Order::updateOrderStatus', ['filter' => ['tenantFilter']]);
+
   });
 
 
