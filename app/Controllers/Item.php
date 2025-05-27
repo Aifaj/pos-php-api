@@ -234,19 +234,19 @@ public function getalladdons()
             }
 
            if (!empty($filter['startDate']) && !empty($filter['endDate'])) {
-    $startDateTime = $filter['startDate'] . ' 00:00:00';
-    $endDateTime = $filter['endDate'] . ' 23:59:59';
-    $query->where('createdDate >=', $startDateTime)
-          ->where('createdDate <=', $endDateTime);
-} else if (!empty($filter['dateRange'])) {
-    if ($filter['dateRange'] === 'last7days') {
-        $last7DaysStart = date('Y-m-d 00:00:00', strtotime('-7 days'));
-        $query->where('createdDate >=', $last7DaysStart);
-    } else if ($filter['dateRange'] === 'last30days') {
-        $last30DaysStart = date('Y-m-d 00:00:00', strtotime('-30 days'));
-        $query->where('createdDate >=', $last30DaysStart);
-    }
-}
+                $startDateTime = $filter['startDate'] . ' 00:00:00';
+                $endDateTime = $filter['endDate'] . ' 23:59:59';
+                $query->where('createdDate >=', $startDateTime)
+                    ->where('createdDate <=', $endDateTime);
+            } else if (!empty($filter['dateRange'])) {
+                if ($filter['dateRange'] === 'last7days') {
+                    $last7DaysStart = date('Y-m-d 00:00:00', strtotime('-7 days'));
+                    $query->where('createdDate >=', $last7DaysStart);
+                } else if ($filter['dateRange'] === 'last30days') {
+                    $last30DaysStart = date('Y-m-d 00:00:00', strtotime('-30 days'));
+                    $query->where('createdDate >=', $last30DaysStart);
+                }
+            }
 
         }
 

@@ -9,6 +9,10 @@ use App\Models\OrderDetailModel;
 use App\Models\ItemModel;
 use App\Libraries\TenantService;
 use App\Models\CustomerPaymentDetails;
+use App\Models\CustomerModel;
+use App\Models\CustomerAddress;
+
+
 
 use Config\Database;
 
@@ -29,96 +33,119 @@ class Order extends BaseController
     }
 
 
-
-
-public function getOrdersPaging()
+    public function getOrdersPaging()
 {
-    $input = $this->request->getJSON();
+    try {
+        $input = $this->request->getJSON();
 
-    // Get the page number from the input, default to 1 if not provided
-    $page = isset($input->page) ? $input->page : 1;
-    $perPage = isset($input->perPage) ? $input->perPage : 10;
-    $sortField = isset($input->sortField) ? $input->sortField : 'orderId';
-    $sortOrder = isset($input->sortOrder) ? $input->sortOrder : 'asc';
-    $search = isset($input->search) ? $input->search : '';
-    $filter = $input->filter;
+        $page       = isset($input->page) ? (int)$input->page : 1;
+        $perPage    = isset($input->perPage) ? (int)$input->perPage : 10;
+        $sortField  = isset($input->sortField) ? $input->sortField : 'orderId';
+        $sortOrder  = isset($input->sortOrder) ? $input->sortOrder : 'asc';
+        $search     = isset($input->search) ? $input->search : '';
+        $filter     = isset($input->filter) ? (array)$input->filter : [];
 
-    $tenantService = new TenantService();
-    
-    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
-    
-    // Load the models with the tenant database connection
-    $OrderModel = new OrderModel($db);
-    $OrderDetailModel = new OrderDetailModel($db);
-    $ItemModel = new ItemModel($db);  // Assuming ItemModel exists
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
-    // Base query for Orders
-    $query = $OrderModel;
+        $orderModel = new OrderModel($db);
+        $orderModel->where('isDeleted', 0);
 
-    // Apply filters based on user input
-    if (!empty($filter)) {
-        $filter = json_decode(json_encode($filter), true);
+        // LIKE search
+        if (!empty($search)) {
+            $orderModel->groupStart()
+                ->like('orderNo', $search)
+                ->orLike('businessNameFor', $search)
+                ->groupEnd();
+        }
 
+        // Filters
         foreach ($filter as $key => $value) {
-            if (in_array($key, ['orderNo', 'orderDate',  'businessNameFor'])) {
-                $query->like($key, $value); // LIKE filter for specific fields
-            } else if (in_array($key, ['createdDate'])) {
-                $query->where($key, $value); // Exact match filter
+            if (in_array($key, ['orderNo', 'orderDate', 'businessNameFor'])) {
+                $orderModel->like($key, $value);
+            } else if ($key === 'createdDate') {
+                $orderModel->where($key, $value);
             }
         }
 
-        // Apply Date Range Filter
+        // Date range filter
         if (!empty($filter['startDate']) && !empty($filter['endDate'])) {
-            $query->where('createdDate >=', $filter['startDate'])
-                ->where('createdDate <=', $filter['endDate']);
-        }
-    }
-
-    $query->where('isDeleted', 0);
-
-    // Apply Sorting
-    if (!empty($sortField) && in_array(strtoupper($sortOrder), ['ASC', 'DESC'])) {
-        $query->orderBy($sortField, $sortOrder);
-    }
-
-    // Fetch all Orders
-    $orders = $query->paginate($perPage, 'default', $page);
-    $pager = $OrderModel->pager;
-
-    // Fetch details for each orders and merge with the main orders data
-    foreach ($orders as &$order) {
-        // Fetch related orders details for each ordersId
-        $ordersDetails = $OrderDetailModel->where('orderId', $order['orderId'])->findAll();
-
-        // Merge the details under 'items', and for each orders detail, fetch the corresponding item data
-        foreach ($ordersDetails as &$ordersDetail) {
-            // Fetch item data using itemId from ItemModel
-            $item = $ItemModel->find($ordersDetail['itemId']);  // Assuming 'itemId' is a field in OrderDetailModel
-            
-            // Merge item data into ordersDetail
-            if ($item) {
-                $ordersDetail['item'] = $item;  // Now each ordersDetail will have item details merged into it
-            }
+            $orderModel->where('DATE(createdDate) >=', $filter['startDate'])
+                       ->where('DATE(createdDate) <=', $filter['endDate']);
         }
 
-        // Add the orders details under 'items'
-        $order['items'] = $ordersDetails;
+        // Clone for count
+        $countBuilder = clone $orderModel;
+        $totalItems = $countBuilder->countAllResults(false);
+
+        // Sorting
+        if (!empty($sortField) && in_array(strtoupper($sortOrder), ['ASC', 'DESC'])) {
+            $orderModel->orderBy($sortField, $sortOrder);
+        }
+
+        // Pagination
+        $offset = ($page - 1) * $perPage;
+        $orders = $orderModel->limit($perPage, $offset)->get()->getResultArray();
+
+        // Get unique customerIds and customerAddressIds from orders
+        $customerIds = array_unique(array_filter(array_column($orders, 'customerId')));
+        $customerAddressIds = array_unique(array_filter(array_column($orders, 'customerAddressId')));
+
+        // Fetch customers
+        $customerModel = new CustomerModel($db);
+        $customers = [];
+        if (!empty($customerIds)) {
+            $customers = $customerModel->whereIn('customerId', $customerIds)->findAll();
+        }
+        $customerMap = [];
+        foreach ($customers as $customer) {
+            $customerMap[$customer['customerId']] = $customer;
+        }
+
+        // Fetch customer addresses
+        $customerAddressModel = new CustomerAddress($db);
+        $addresses = [];
+        if (!empty($customerAddressIds)) {
+            $addresses = $customerAddressModel->whereIn('customerAddressId', $customerAddressIds)->findAll();
+        }
+        $addressMap = [];
+        foreach ($addresses as $address) {
+            $addressMap[$address['customerAddressId']] = $address;
+        }
+
+        // Attach customer and address info to orders
+        foreach ($orders as &$order) {
+            $custId = $order['customerId'] ?? null;
+            $addrId = $order['customerAddressId'] ?? null;
+
+            $order['customer'] = $custId && isset($customerMap[$custId]) ? $customerMap[$custId] : null;
+            $order['customerAddress'] = $addrId && isset($addressMap[$addrId]) ? $addressMap[$addrId] : null;
+        }
+
+        $totalPages = ceil($totalItems / $perPage);
+
+        return $this->respond([
+            'status'    => true,
+            'message'   => 'All Order Data Fetched',
+            'data'      => $orders,
+            'pagination'=> [
+                'currentPage' => $page,
+                'totalPages'  => $totalPages,
+                'totalItems'  => $totalItems,
+                'perPage'     => $perPage
+            ]
+        ], 200);
+    } catch (\Throwable $e) {
+        log_message('error', 'Order Paging Error: ' . $e->getMessage());
+
+        return $this->respond([
+            'status'  => false,
+            'message' => 'Internal Server Error',
+            'error'   => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine()
+        ], 500);
     }
-
-    // Prepare the response
-    $response = [
-        "status" => true,
-        "message" => "All Order Data Fetched",
-        "data" => $orders,
-        "pagination" => [
-            "currentPage" => $pager->getCurrentPage(),
-            "totalPages" => $pager->getPageCount(),
-            "totalItems" => $pager->getTotal(),
-            "perPage" => $perPage
-        ]
-    ];
-
-    return $this->respond($response, 200);
 }
 
 
@@ -545,26 +572,55 @@ public function getOrdersPaging()
         return $this->respond(['status' => true, 'message' => 'Last Order Fetched Successfully', 'data' => $lastOrder], 200);
     }
 
-    public function getAllCustomerTransactionByCustomerId()
-    {
-         $input = $this->request->getJSON();
+   
+ public function getAllCustomerTransactionByCustomerId()
+{
+    $input = $this->request->getJSON();
+    $customerId = $input->customerId ?? null;
+    $startDate = $input->startDate ?? null;
+    $endDate = $input->endDate ?? null;
 
-        $tenantService = new TenantService();
-        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
-        $paymentModel = new CustomerPaymentDetails($db);
+    $paymentModel = new CustomerPaymentDetails($db);
+    $customerModel = new CustomerModel($db);
 
-        // Fetch only addons where isDeleted = 0
-        $address = $paymentModel->where('isDeleted', 0)->where('customerId', $input->customerId)->findAll();
+    $builder = $paymentModel->builder();
+    $builder->where('isDeleted', 0);
 
-        $response = [
-            "status" => true,
-            "message" => "All Data Fetched",
-            "data" => $address,
-        ];
-
-        return $this->respond($response, 200);
+    if ($customerId) {
+        $builder->where('customerId', $customerId);
     }
+
+    // Add date range filtering if dates are provided
+    if ($startDate && $endDate) {
+    if ($startDate === $endDate) {
+        // Today filter
+        $builder->where("DATE(STR_TO_DATE(createdDate, '%d-%m-%Y %h:%i %p')) =", $startDate);
+    } else {
+        // Range filter
+        $builder->where("DATE(STR_TO_DATE(createdDate, '%d-%m-%Y %h:%i %p')) >=", $startDate)
+                ->where("DATE(STR_TO_DATE(createdDate, '%d-%m-%Y %h:%i %p')) <=", $endDate);
+    }
+}
+
+    $payments = $builder->get()->getResult();
+
+    // For each payment, fetch and attach customer data
+    foreach ($payments as &$payment) {
+        $customer = $customerModel->where('customerId', $payment->customerId)->first();
+        $payment->customer = $customer;
+        unset($payment->customerId); // Optional
+    }
+
+    return $this->respond([
+        "status" => true,
+        "message" => "All Data Fetched",
+        "data" => $payments
+    ], 200);
+}
+
 
     
 }
