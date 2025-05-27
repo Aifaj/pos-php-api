@@ -233,23 +233,21 @@ public function getalladdons()
                 }
             }
 
-            // Apply Date Range Filter (startDate and endDate)
-            if (!empty($filter['startDate']) && !empty($filter['endDate'])) {
-                $query->where('createdDate >=', $filter['startDate'])
-                    ->where('createdDate <=', $filter['endDate']);
-            }
+           if (!empty($filter['startDate']) && !empty($filter['endDate'])) {
+    $startDateTime = $filter['startDate'] . ' 00:00:00';
+    $endDateTime = $filter['endDate'] . ' 23:59:59';
+    $query->where('createdDate >=', $startDateTime)
+          ->where('createdDate <=', $endDateTime);
+} else if (!empty($filter['dateRange'])) {
+    if ($filter['dateRange'] === 'last7days') {
+        $last7DaysStart = date('Y-m-d 00:00:00', strtotime('-7 days'));
+        $query->where('createdDate >=', $last7DaysStart);
+    } else if ($filter['dateRange'] === 'last30days') {
+        $last30DaysStart = date('Y-m-d 00:00:00', strtotime('-30 days'));
+        $query->where('createdDate >=', $last30DaysStart);
+    }
+}
 
-            // Apply Last 7 Days Filter if requested
-            if (!empty($filter['dateRange']) && $filter['dateRange'] === 'last7days') {
-                $last7DaysStart = date('Y-m-d', strtotime('-7 days'));  // 7 days ago from today
-                $query->where('createdDate >=', $last7DaysStart);
-            }
-
-            // Apply Last 30 Days Filter if requested
-            if (!empty($filter['dateRange']) && $filter['dateRange'] === 'last30days') {
-                $last30DaysStart = date('Y-m-d', strtotime('-30 days'));  // 30 days ago from today
-                $query->where('createdDate >=', $last30DaysStart);
-            }
         }
 
         // Apply sorting

@@ -134,7 +134,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
   $routes->group('customer', function ($routes) {
     //Routes for customer
-    $routes->get('getall', 'Customer::index',['filter' => ['tenantFilter']]);
+    $routes->get('getallCustomer', 'Customer::getallCustomer',['filter' => ['tenantFilter']]);
     $routes->post('getallpaging', 'Customer::getCustomersPaging',['filter' => ['tenantFilter']]);
     $routes->get('view/(:segment)', 'Customer::show/$1',['filter' => 'authFilter']);
     $routes->post('create', 'Customer::create',['filter' => ['tenantFilter']]);
@@ -332,6 +332,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('create', 'Order::create',['filter' => ['tenantFilter']]);
     $routes->post('update', 'Order::update',['filter' => ['authFilter','tenantFilter']]);
     $routes->post('delete', 'Order::delete',['filter' => ['authFilter','tenantFilter']]);
+    $routes->post('getAllCustomerTransactionByCustomerId', 'Order::getAllCustomerTransactionByCustomerId',['filter' => ['tenantFilter']]);
+
+    
     $routes->get('getlastorder', 'Order::getLastOrder',['filter' => ['authFilter','tenantFilter']]);
   });
 

@@ -545,5 +545,26 @@ public function getOrdersPaging()
         return $this->respond(['status' => true, 'message' => 'Last Order Fetched Successfully', 'data' => $lastOrder], 200);
     }
 
+    public function getAllCustomerTransactionByCustomerId()
+    {
+         $input = $this->request->getJSON();
+
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+        $paymentModel = new CustomerPaymentDetails($db);
+
+        // Fetch only addons where isDeleted = 0
+        $address = $paymentModel->where('isDeleted', 0)->where('customerId', $input->customerId)->findAll();
+
+        $response = [
+            "status" => true,
+            "message" => "All Data Fetched",
+            "data" => $address,
+        ];
+
+        return $this->respond($response, 200);
+    }
+
     
 }

@@ -422,6 +422,27 @@ public function getAllCustomerAddress()
     return $this->respond($response, 200);
 }
 
+public function getallCustomer()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $itemModel = new CustomerModel($db);
+
+    // Fetch only addons where isDeleted = 0
+    $address = $itemModel->where('isDeleted', 0)->findAll();
+
+    $response = [
+        "status" => true,
+        "message" => "All Data Fetched",
+        "data" => $address,
+    ];
+
+    return $this->respond($response, 200);
+}
+
+
+
 
    public function addCustomerAddress()
     {
@@ -488,17 +509,9 @@ public function getAllCustomerAddress()
     
         // Get input data
         $data = $this->request->getJSON(true);
+
     
-        // Validate that customeraddressId is provided
-        if (!isset($data['customerId'])) {
-            return $this->respond([
-                'status' => false,
-                'message' => 'addressId is required'
-            ], 400);
-           
-        }
-    
-        $customerAddressId = $data['customerId'];
+        $customerAddressId = $data['customerAddressId'];
 
     
         // Check if addon exists
