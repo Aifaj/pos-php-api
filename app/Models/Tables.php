@@ -19,6 +19,7 @@ class Tables extends Model
         'waiterName',
         'tableCapacity',
         'extraInfo',
+        'tableArea',
         'isActive',
         'isDeleted',
         'createdBy',
