@@ -32,7 +32,15 @@ $routes->options('(:any)', function () use ($allowed_origins){
     http_response_code(204); // No Content
     exit();
 });
+
+
 $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
+
+   $routes->group('table', function ($routes) {
+    $routes->get('getalltable', 'TablesController::getalltable',['filter' => 'tenantFilter']); 
+    $routes->post('addTable', 'TablesController::addTable',['filter' => 'tenantFilter']); 
+    $routes->post('updateTable', 'TablesController::updateTable',['filter' => 'tenantFilter']); 
+  });
 
   $routes->group('user', function ($routes) {
     $routes->get('getall', 'User::index',['filter' => 'authFilter']); 
@@ -84,6 +92,8 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('getbusinessespaging', 'User::getBusinessesPaging',['filter' => 'authFilter']);
 
   });
+
+  
 
   $routes->group('setting', function ($routes) {
     // routes for settings
@@ -434,6 +444,8 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
 
 });
+
+
 
 $routes->group('webapi', ['namespace' => 'App\Controllers'], function ($routes) {
 
