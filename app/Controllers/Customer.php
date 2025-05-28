@@ -456,16 +456,16 @@ public function getallCustomer()
         $data = $this->request->getJSON(true);
 
         // Validate required fields
-        if (!isset($data['customerId']) ||
-    !isset($data['mobileNo']) ||
-    !isset($data['pincode']) ||
-    !isset($data['addressLine1'])
-) {
-    return $this->respond([
-        'status' => false,
-        'message' => 'Required fields missing: customerId, fullName, mobileNo, pincode, addressLine1, or createdBy',
-    ], 400); // Bad Request
-}
+         if (!isset($data['customerId']) ||
+             !isset($data['mobileNo']) ||
+             !isset($data['pincode']) ||
+             !isset($data['addressLine1'])
+               ) {
+             return $this->respond([
+            'status' => false,
+            'message' => 'Required fields missing: customerId, fullName, mobileNo, pincode, addressLine1, or createdBy',
+               ], 400); // Bad Request
+             }
 
         // Format and prepare the data
         $insertData = [

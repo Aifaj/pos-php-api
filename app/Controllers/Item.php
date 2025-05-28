@@ -1050,4 +1050,139 @@ public function createCategory()
     }
 
 
+    public function createProductCategory()
+{
+    // Retrieve normal input fields
+    $input = $this->request->getPost();
+
+    // Define validation rules
+    $rules = [
+        'productCategoryName' => ['rules' => 'required'],
+    ];
+
+    if ($this->validate($rules)) {
+        // Extract tenant name from input
+        $tenantName = $input['tenantName'] ?? 'defaultTenant';
+
+       
+        // Connect to the tenant database
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+        $model = new ProductCategory($db);
+
+        // Save to database
+        $productCategory = $model->insert($input);
+
+        return $this->respond([
+            "status" => true,
+            "message" => "Product Category Added Successfully",
+            "data" => $productCategory
+        ], 200);
+    } else {
+        return $this->fail([
+            'status' => false,
+            'errors' => $this->validator->getErrors(),
+            'message' => 'Invalid Inputs'
+        ], 409);
+    }
+}
+
+
+public function getAllProductCategory()
+{
+    // 🧪 Debug logs
+    log_message('error', 'Inside getAllProductCategory function');
+
+    $header = $this->request->getHeaderLine('X-Tenant-Config');
+    log_message('error', 'Tenant Header: ' . $header);
+
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($header);
+
+    if (!$db) {
+        log_message('error', 'ERROR: Database config is NULL');
+        return $this->respond(['status' => false, 'message' => 'Database config error'], 500);
+    }
+
+    try {
+        $model = new ProductCategory($db);
+        $productCategory = $model->where('isDeleted', 0)->findAll();
+        return $this->respond(['status' => true, 'message' => 'Data fetched successfully', 'data' => $productCategory], 200);
+    } catch (\Throwable $e) {
+        log_message('error', 'Exception: ' . $e->getMessage());
+        return $this->respond(['status' => false, 'message' => 'Internal Server Error'], 500);
+    }
+}
+
+public function updateProductCategory()
+{
+    try {
+        $input = $this->request->getPost();
+
+        $rules = [
+            'productCategoryId' => ['rules' => 'required|numeric'],
+            'productCategoryName' => ['rules' => 'required'],
+
+        ];
+
+        if ($this->validate($rules)) {
+            $tenantName = $input['tenantName'] ?? 'defaultTenant';
+
+            // Get tenant DB connection
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+            $model = new ProductCategory($db);
+            $productCategoryId = $input['productCategoryId'];
+
+            $existingItem = $model->find($productCategoryId);
+            if (!$existingItem) {
+                return $this->fail(['status' => false, 'message' => 'Item not found'], 404);
+            }
+
+            $updateData = [
+                'productCategoryName' => $input['productCategoryName'] ?? $existingItem['productCategoryName'],
+                'description'      => $input['description'] ?? $existingItem['description'],
+            ];
+
+            // $coverImage = $this->request->getFile('coverImage');
+            // if ($coverImage && $coverImage->isValid() && !$coverImage->hasMoved()) {
+            //     $coverImageName = $coverImage->getRandomName();
+            //     $coverImagePath = FCPATH . 'uploads/' . $tenantName . '/itemCategoryImages/';
+
+            //     if (!is_dir($coverImagePath)) {
+            //         mkdir($coverImagePath, 0777, true);
+            //     }
+
+            //     $coverImage->move($coverImagePath, $coverImageName);
+            //     $updateData['coverImage'] = $tenantName . '/itemCategoryImages/' . $coverImageName;
+            // }
+
+            $updated = $model->update($productCategoryId, $updateData);
+
+            if ($updated) {
+                return $this->respond(['status' => true, 'message' => 'Product Category Updated Successfully'], 200);
+            } else {
+                echo "<pre>Update failed: ";
+                print_r($db->error());
+                echo "</pre>";
+                exit;
+            }
+        } else {
+            echo "<pre>Validation Failed:\n";
+            print_r($this->validator->getErrors());
+            echo "</pre>";
+            exit;
+        }
+    } catch (\Throwable $e) {
+        echo "<pre>Caught Exception:\n";
+        print_r($e->getMessage());
+        echo "\nFile: " . $e->getFile();
+        echo "\nLine: " . $e->getLine();
+        echo "\nTrace:\n" . $e->getTraceAsString();
+        echo "</pre>";
+        exit;
+    }
+}
+
 }

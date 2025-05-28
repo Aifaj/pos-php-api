@@ -42,9 +42,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('delete', 'User::delete',['filter' => 'authFilter']); 
     $routes->post('login', 'User::login');
     
-    $routes->post('addRestaurantDetails', 'User::addRestaurantDetails',['filter' => 'authFilter']);
-    $routes->post('updateRestaurantDetails', 'User::updateRestaurantDetails',['filter' => 'authFilter']);
-    $routes->get('getAllRestaurantDetails', 'User::getAllRestaurantDetails',['filter' => 'authFilter']);
+    $routes->post('addRestaurantDetails', 'User::addRestaurantDetails',['filter' => ['tenantFilter']]);
+    $routes->post('updateRestaurantDetails', 'User::updateRestaurantDetails',['filter' => ['tenantFilter']]);
+    $routes->get('getAllRestaurantDetails', 'User::getAllRestaurantDetails',['filter' => ['tenantFilter']]);
 
     
     $routes->get('profile', 'User::profile',['filter' => 'authFilter']);
@@ -207,8 +207,9 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->get('getItemByItemTypeId/(:segment)', 'Item::getItemByItemTypeId/$1',['filter' => ['authFilter','tenantFilter']]);
 
 
-    // Routes for website
-   
+    $routes->post('createProductCategory', 'Item::createProductCategory',['filter' => ['tenantFilter']]);
+    $routes->get('getAllProductCategory', 'Item::getAllProductCategory',['filter' => ['tenantFilter']]);
+
 
 
   });

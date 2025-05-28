@@ -1161,107 +1161,259 @@ public function assignBusiness()
 
 
 
-public function addRestaurantDetails()
+// public function addRestaurantDetails()
+// {
+//     $tenantService = new TenantService();
+//     $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+//     $restaurantModel = new RestaurantDetails($db);
+
+//     // Get JSON input
+//     $data = $this->request->getJSON(true);
+
+//     // Validate required fields
+//     if (!isset($data['resTitle'], $data['resName'], $data['resAddress'], $data['resContactNo'])) {
+//         return $this->respond([
+//             'status' => false,
+//             'message' => 'Required fields missing: resTitle, resName, resAddress, or resContactNo',
+//         ], 400);
+//     }
+
+//     // Prepare data for insert
+//     $insertData = [
+//         'resTitle'       => $data['resTitle'],
+//         'resName'        => $data['resName'],
+//         'resAddress'     => $data['resAddress'],
+//         'resContactNo'   => $data['resContactNo'],
+//         'resTrn'         => $data['resTrn'] ?? null,
+//         'resLogo'  => $data['resLogo'] ?? null,  // store base64 string directly, or handle separately if needed
+//         'isActive'       => $data['isActive'] ?? 1,
+//         'createdDate'    => date('Y-m-d H:i:s', strtotime($data['createdDate'] ?? 'now')),
+//     ];
+
+//     // Insert data into DB
+//     if ($restaurantModel->insert($insertData)) {
+//         return $this->respond([
+//             'status' => true,
+//             'message' => 'Restaurant details added successfully',
+//             'data' => $insertData
+//         ], 200);
+//     } else {
+//         return $this->respond([
+//             'status' => false,
+//             'message' => 'Failed to add restaurant details',
+//             'errors' => $restaurantModel->errors()
+//         ], 500);
+//     }
+// }
+ public function addRestaurantDetails()
 {
     $tenantService = new TenantService();
     $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
-    $restaurantModel = new RestaurantDetails($db);
+    $resturantModel = new RestaurantDetails($db);
 
     // Get JSON input
+
     $data = $this->request->getJSON(true);
 
     // Validate required fields
-    if (!isset($data['resTitle'], $data['resName'], $data['resAddress'], $data['resContactNo'])) {
-        return $this->respond([
-            'status' => false,
-            'message' => 'Required fields missing: resTitle, resName, resAddress, or resContactNo',
-        ], 400);
-    }
+     if (!isset($data['resTitle']) ||
+         !isset($data['resName']) ||
+         !isset($data['resAddress']) ||
+         !isset($data['resContactNo'])
+           ) {
+         return $this->respond([
+        'status' => false,
+        'message' => 'Required fields missing:  or createdBy',
+           ], 400); // Bad Request
+         }
 
-    // Prepare data for insert
+    // Format and prepare the data
     $insertData = [
-        'resTitle'       => $data['resTitle'],
-        'resName'        => $data['resName'],
-        'resAddress'     => $data['resAddress'],
-        'resContactNo'   => $data['resContactNo'],
-        'resTrn'         => $data['resTrn'] ?? null,
-        'resLogo'  => $data['resLogo'] ?? null,  // store base64 string directly, or handle separately if needed
-        'isActive'       => $data['isActive'] ?? 1,
-        'createdDate'    => date('Y-m-d H:i:s', strtotime($data['createdDate'] ?? 'now')),
-    ];
+                'resTitle'       => $data['resTitle'],
+                'resName'        => $data['resName'],
+                'resAddress'     => $data['resAddress'],
+                'resContactNo'   => $data['resContactNo'],
+                'resTrn'         => $data['resTrn'] ?? null,
+                'resLogo'  => $data['resLogo'] ?? null,  // store base64 string directly, or handle separately if needed
+                'isActive'       => $data['isActive'] ?? 1,
+                'createdDate'    => date('Y-m-d H:i:', strtotime($data['createdDate'] ?? 'now')),
+            ];
 
-    // Insert data into DB
-    if ($restaurantModel->insert($insertData)) {
+    // Insert data
+    if ($resturantModel->insert($insertData)) {
         return $this->respond([
             'status' => true,
-            'message' => 'Restaurant details added successfully',
+            'message' => 'Address added successfully',
             'data' => $insertData
         ], 200);
     } else {
         return $this->respond([
             'status' => false,
-            'message' => 'Failed to add restaurant details',
+            'message' => 'Failed to add address',
             'errors' => $restaurantModel->errors()
         ], 500);
     }
 }
 
+// public function addRestaurantDetails()
+// {
+//     $input = $this->request->getJSON();
+//     $rules = [
+//         'resTitle'  => ['rules' => 'required'],
+//         'resName' => ['rules' => 'required'],
+//         'resAddress'    => ['rules' => 'required'],
+//         'resContactNo'      => ['rules' => 'required'],
+//         'resTrn'      => ['rules' => 'required'],
+//         'resLogo'      => ['rules' => 'required'],
+//         'isActive'      => ['rules' => 'required'],
+//         'createdDate'      => ['rules' => 'required'],
 
-public function updateRestaurantDetails($resId = null)
+//     ];
+
+//     if ($this->validate($rules)) {
+//         $model = new RightModel();  // Assuming you have a RightModel
+//         $data = [
+//             'rightName'  => $input->rightName,
+//             'rightLabel' => $input->rightLabel,
+//             'iconUrl'    => $input->iconUrl,
+//             'route'      => $input->route
+//         ];
+//         $model->insert($data);
+
+//         return $this->respond(["status" => true, 'message' => 'Right Created Successfully'], 200);
+//     } else {
+//         $response = [
+//             'status'  => false,
+//             'errors'  => $this->validator->getErrors(),
+//             'message' => 'Invalid Inputs'
+//         ];
+//         return $this->fail($response, 409);
+//     }
+// }
+
+
+public function updateRestaurantDetails()
 {
-    if (!$resId) {
-        return $this->respond([
-            'status' => false,
-            'message' => 'Restaurant ID is required for update',
-        ], 400);
-    }
 
     $tenantService = new TenantService();
     $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
     $restaurantModel = new RestaurantDetails($db);
 
-    // Check if the restaurant exists
+    // Get input data
+    $data = $this->request->getJSON(true);
+
+
+    $resId = $data['resId'];
+
+
+    // Check if addon exists
     $existing = $restaurantModel->find($resId);
     if (!$existing) {
         return $this->respond([
             'status' => false,
-            'message' => 'Restaurant not found',
+            'message' => 'Resturant not found'
         ], 404);
     }
 
-    // Get JSON input
-    $data = $this->request->getJSON(true);
-
-    // Prepare data to update - only update fields sent in request
+    // Prepare fields to update
     $updateData = [];
 
-    $fields = ['resTitle', 'resName', 'resAddress', 'resContactNo', 'resTrn', 'resLogo', 'isActive', 'modifiedDate', 'modifiedBy'];
-    foreach ($fields as $field) {
-        if (isset($data[$field])) {
-            $updateData[$field] = $data[$field];
-        }
+    if (isset($data['resTitle'])) {
+        $updateData['resTitle'] = $data['resTitle'];
+    }
+    if (isset($data['resName'])) {
+        $updateData['resName'] = $data['resName'];
     }
 
-    // If modifiedDate not set, set to now
-    if (!isset($updateData['modifiedDate'])) {
-        $updateData['modifiedDate'] = date('Y-m-d H:i:s');
+    if (isset($data['resAddress'])) {
+        $updateData['resAddress'] = $data['resAddress'];
     }
 
+    if (isset($data['resContactNo'])) {
+        $updateData['resContactNo'] = $data['resContactNo'];
+    }
+    if (isset($data['resTrn'])) {
+        $updateData['resTrn'] = $data['resTrn'];
+    }
+    if (isset($data['resLogo'])) {
+        $updateData['resLogo'] = $data['resLogo'];
+    }
+    if (isset($data['isActive'])) {
+        $updateData['isActive'] = $data['isActive'];
+    }
+    
+
+    // Perform the update
     if ($restaurantModel->update($resId, $updateData)) {
         return $this->respond([
             'status' => true,
-            'message' => 'Restaurant details updated successfully',
+            'message' => 'Restaurant Detail updated successfully',
             'data' => $updateData
         ], 200);
     } else {
         return $this->respond([
             'status' => false,
-            'message' => 'Failed to update restaurant details',
+            'message' => 'Failed to update Restirant',
             'errors' => $restaurantModel->errors()
         ], 500);
     }
+
+
+    // if (!$resId) {
+    //     return $this->respond([
+    //         'status' => false,
+    //         'message' => 'Restaurant ID is required for update',
+    //     ], 400);
+    // }
+
+    // $tenantService = new TenantService();
+    // $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    // $restaurantModel = new RestaurantDetails($db);
+
+    // // Check if the restaurant exists
+    // $existing = $restaurantModel->find($resId);
+    // if (!$existing) {
+    //     return $this->respond([
+    //         'status' => false,
+    //         'message' => 'Restaurant not found',
+    //     ], 404);
+    // }
+
+    // // Get JSON input
+    // $data = $this->request->getJSON(true);
+
+    // // Prepare data to update - only update fields sent in request
+    // $updateData = [];
+
+    // $fields = ['resTitle', 'resName', 'resAddress', 'resContactNo', 'resTrn', 'resLogo', 'isActive', 'modifiedDate', 'modifiedBy'];
+    // foreach ($fields as $field) {
+    //     if (isset($data[$field])) {
+    //         $updateData[$field] = $data[$field];
+    //     }
+    // }
+
+    // // If modifiedDate not set, set to now
+    // if (!isset($updateData['modifiedDate'])) {
+    //     $updateData['modifiedDate'] = date('Y-m-d H:i:s');
+    // }
+
+    // if ($restaurantModel->update($resId, $updateData)) {
+    //     return $this->respond([
+    //         'status' => true,
+    //         'message' => 'Restaurant details updated successfully',
+    //         'data' => $updateData
+    //     ], 200);
+    // } else {
+    //     return $this->respond([
+    //         'status' => false,
+    //         'message' => 'Failed to update restaurant details',
+    //         'errors' => $restaurantModel->errors()
+    //     ], 500);
+    // }
 }
 
 
