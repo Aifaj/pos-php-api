@@ -386,7 +386,7 @@ public function login()
     }
 
     // Step 1: Connect to tenant DB
-    $dbName = 'biznfc_' . $selectedCard;
+    $dbName = $selectedCard;
     $tenantDb = \App\Libraries\TenantDatabase::connectTo($dbName);
 
     if (!$tenantDb) {
@@ -435,7 +435,7 @@ public function login()
   
         if($this->validate($rules)){
 
-         $dbName = 'biznfc_' . $selectedCard;
+         $dbName = $selectedCard;
          $tenantDb = \App\Libraries\TenantDatabase::connectTo($dbName);
          $model = new \App\Models\TenantUserModel($tenantDb);
            // $model = new UserModel();
