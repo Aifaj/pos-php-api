@@ -15,6 +15,8 @@ use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
 use App\Models\SlideModel;
 use App\Models\ProductCategory;
+use App\Models\ProductSubCategory;
+
 
 
 
@@ -1127,8 +1129,6 @@ public function updateProductCategory()
         $rules = [
             'productCategoryName' => ['rules' => 'required'],
             'description' => ['rules' => 'required'],
-
-
         ];
 
         if ($this->validate($rules)) {
@@ -1153,25 +1153,150 @@ public function updateProductCategory()
             $updateData = [
                 'productCategoryName' => $input['productCategoryName'] ?? $existingItem['productCategoryName'],
                 'description'      => $input['description'] ?? $existingItem['description'],
+                'isDeleted'      => $input['isDeleted'] ?? $existingItem['isDeleted'],
+
             ];
 
-            // $coverImage = $this->request->getFile('coverImage');
-            // if ($coverImage && $coverImage->isValid() && !$coverImage->hasMoved()) {
-            //     $coverImageName = $coverImage->getRandomName();
-            //     $coverImagePath = FCPATH . 'uploads/' . $tenantName . '/itemCategoryImages/';
-
-            //     if (!is_dir($coverImagePath)) {
-            //         mkdir($coverImagePath, 0777, true);
-            //     }
-
-            //     $coverImage->move($coverImagePath, $coverImageName);
-            //     $updateData['coverImage'] = $tenantName . '/itemCategoryImages/' . $coverImageName;
-            // }
+           
 
             $updated = $model->update($productCategoryId, $updateData);
 
             if ($updated) {
                 return $this->respond(['status' => true, 'message' => 'Product Category Updated Successfully'], 200);
+            } else {
+                echo "<pre>Update failed: ";
+                print_r($db->error());
+                echo "</pre>";
+                exit;
+            }
+        } else {
+            echo "<pre>Validation Failed:\n";
+            print_r($this->validator->getErrors());
+            echo "</pre>";
+            exit;
+        }
+    } catch (\Throwable $e) {
+        echo "<pre>Caught Exception:\n";
+        print_r($e->getMessage());
+        echo "\nFile: " . $e->getFile();
+        echo "\nLine: " . $e->getLine();
+        echo "\nTrace:\n" . $e->getTraceAsString();
+        echo "</pre>";
+        exit;
+    }
+}
+
+public function createProductSubCategory()
+    {
+        try {
+            $input = $this->request->getJSON(true);
+    
+            // Define validation rules
+            $rules = [
+                'productSubCategoryName' => ['rules' => 'required'],
+                'productCategoryId' => ['rules' => 'required'],
+                'description' => ['rules' => 'required'],
+            ];
+    
+            if (!$this->validate($rules)) {
+                return $this->fail([
+                    'status' => false,
+                    'errors' => $this->validator->getErrors(),
+                    'message' => 'Invalid Inputs',
+                ], 409);
+            }
+    
+  
+            // Connect to tenant DB
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+    
+            // Insert into customer model
+            $model = new ProductSubCategory($db);
+            $model->insert($input);
+    
+            return $this->respond(['status' => true, 'message' => ' SubCategory Added Successfully'], 200);
+    
+        } catch (\Throwable $e) {
+            return $this->fail([
+                'status' => false,
+                'message' => 'Server Error: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
+
+    public function getAllSubProductCategory()
+{
+    // 🧪 Debug logs
+    log_message('error', 'Inside getAllProductCategory function');
+
+    $header = $this->request->getHeaderLine('X-Tenant-Config');
+    log_message('error', 'Tenant Header: ' . $header);
+
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($header);
+
+    if (!$db) {
+        log_message('error', 'ERROR: Database config is NULL');
+        return $this->respond(['status' => false, 'message' => 'Database config error'], 500);
+    }
+
+    try {
+        $model = new ProductSubCategory($db);
+        $productSubCategory = $model->where('isDeleted', 0)->findAll();
+        return $this->respond(['status' => true, 'message' => 'Data fetched successfully', 'data' => $productSubCategory], 200);
+    } catch (\Throwable $e) {
+        log_message('error', 'Exception: ' . $e->getMessage());
+        return $this->respond(['status' => false, 'message' => 'Internal Server Error'], 500);
+    }
+}
+
+public function updateSubProductCategory()
+{
+    try {
+        $input = $this->request->getJSON(true); // true = return associative array
+
+        $rules = [
+            'productSubCategoryName' => ['rules' => 'required'],
+            'productCategoryId' => ['rules' => 'required'],
+            'description' => ['rules' => 'required'],
+        ];
+
+        if ($this->validate($rules)) {
+            $tenantName = $input['tenantName'] ?? 'defaultTenant';
+
+            // Get tenant DB connection
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+            $model = new ProductSubCategory($db);
+
+            if (!isset($input['productSubCategoryId'])) {
+                return $this->fail(['status' => false, 'message' => 'productCategoryId is required'], 400);
+            }
+            $productSubCategoryId = $input['productSubCategoryId'];
+
+            $existingItem = $model->find($productSubCategoryId);
+            if (!$existingItem) {
+                return $this->fail(['status' => false, 'message' => 'Item not found'], 404);
+            }
+
+            $updateData = [
+
+                'productSubCategoryName' => $input['productSubCategoryName'] ?? $existingItem['productSubCategoryName'],
+                'productCategoryId' => $input['productCategoryId'] ?? $existingItem['productCategoryId'],
+                'description'      => $input['description'] ?? $existingItem['description'],
+                'isDeleted'      => $input['isDeleted'] ?? $existingItem['isDeleted'],
+
+            ];
+
+           
+
+            $updated = $model->update($productSubCategoryId, $updateData);
+
+            if ($updated) {
+                return $this->respond(['status' => true, 'message' => 'Product SubCategory Updated Successfully'], 200);
             } else {
                 echo "<pre>Update failed: ";
                 print_r($db->error());
