@@ -14,6 +14,8 @@ use App\Libraries\TenantService;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
 use App\Models\SlideModel;
+use App\Models\ProductCategory;
+
 
 
 class Item extends BaseController
@@ -1051,41 +1053,44 @@ public function createCategory()
 
 
     public function createProductCategory()
-{
-    // Retrieve normal input fields
-    $input = $this->request->getPost();
-
-    // Define validation rules
-    $rules = [
-        'productCategoryName' => ['rules' => 'required'],
-    ];
-
-    if ($this->validate($rules)) {
-        // Extract tenant name from input
-        $tenantName = $input['tenantName'] ?? 'defaultTenant';
-
-       
-        // Connect to the tenant database
-        $tenantService = new TenantService();
-        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
-        $model = new ProductCategory($db);
-
-        // Save to database
-        $productCategory = $model->insert($input);
-
-        return $this->respond([
-            "status" => true,
-            "message" => "Product Category Added Successfully",
-            "data" => $productCategory
-        ], 200);
-    } else {
-        return $this->fail([
-            'status' => false,
-            'errors' => $this->validator->getErrors(),
-            'message' => 'Invalid Inputs'
-        ], 409);
+    {
+        try {
+            $input = $this->request->getJSON(true);
+    
+            // Define validation rules
+            $rules = [
+                'productCategoryName' => ['rules' => 'required'],
+                'description' => ['rules' => 'required'],
+            ];
+    
+            if (!$this->validate($rules)) {
+                return $this->fail([
+                    'status' => false,
+                    'errors' => $this->validator->getErrors(),
+                    'message' => 'Invalid Inputs',
+                ], 409);
+            }
+    
+  
+            // Connect to tenant DB
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+    
+            // Insert into customer model
+            $model = new ProductCategory($db);
+            $model->insert($input);
+    
+            return $this->respond(['status' => true, 'message' => 'Category Added Successfully'], 200);
+    
+        } catch (\Throwable $e) {
+            return $this->fail([
+                'status' => false,
+                'message' => 'Server Error: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
-}
+    
 
 
 public function getAllProductCategory()
@@ -1117,11 +1122,12 @@ public function getAllProductCategory()
 public function updateProductCategory()
 {
     try {
-        $input = $this->request->getPost();
+        $input = $this->request->getJSON(true); // true = return associative array
 
         $rules = [
-            'productCategoryId' => ['rules' => 'required|numeric'],
             'productCategoryName' => ['rules' => 'required'],
+            'description' => ['rules' => 'required'],
+
 
         ];
 
@@ -1133,6 +1139,10 @@ public function updateProductCategory()
             $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
 
             $model = new ProductCategory($db);
+
+            if (!isset($input['productCategoryId'])) {
+                return $this->fail(['status' => false, 'message' => 'productCategoryId is required'], 400);
+            }
             $productCategoryId = $input['productCategoryId'];
 
             $existingItem = $model->find($productCategoryId);

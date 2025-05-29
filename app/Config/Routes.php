@@ -219,6 +219,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
     $routes->post('createProductCategory', 'Item::createProductCategory',['filter' => ['tenantFilter']]);
     $routes->get('getAllProductCategory', 'Item::getAllProductCategory',['filter' => ['tenantFilter']]);
+    $routes->post('updateProductCategory', 'Item::updateProductCategory',['filter' => ['tenantFilter']]);
 
 
 

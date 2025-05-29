@@ -12,7 +12,8 @@ class ProductCategory extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['productCategoryId', 'productCategoryName','description','isActive','isDeleted', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy'];
+    protected $allowedFields    = ['productCategoryName',
+    'description','isActive','isDeleted', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
