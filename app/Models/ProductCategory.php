@@ -13,7 +13,7 @@ class ProductCategory extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = ['productCategoryName',
-    'description','isActive','isDeleted', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy'];
+    'description','gstTax','isActive','isDeleted', 'modifiedDate', 'modifiedBy', 'createdDate', 'createdBy'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

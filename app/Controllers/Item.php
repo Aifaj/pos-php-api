@@ -518,6 +518,9 @@ public function update()
                 'addons' => $input['addons'] ?? '',
                 'isPortion' => $input['isPortion'] ?? '',
                 'portion' => $input['portion'] ?? '',
+                'productCategoryId' => $input['productCategoryId'] ?? '',
+                'productSubCategoryId' => $input['productSubCategoryId'] ?? '',
+                'gstPercentage' => $input['gstPercentage'] ?? '',
             ];
 
             // Save cover image
@@ -1153,6 +1156,7 @@ public function updateProductCategory()
             $updateData = [
                 'productCategoryName' => $input['productCategoryName'] ?? $existingItem['productCategoryName'],
                 'description'      => $input['description'] ?? $existingItem['description'],
+                'gstTax'           => $input['gstTax'] ?? $existingItem['gstTax'],
                 'isDeleted'      => $input['isDeleted'] ?? $existingItem['isDeleted'],
 
             ];
@@ -1251,6 +1255,48 @@ public function createProductSubCategory()
         return $this->respond(['status' => false, 'message' => 'Internal Server Error'], 500);
     }
 }
+
+
+public function getAllProductSubCategoryByCategoryId()
+{
+    $input = $this->request->getJSON(true); 
+    $productCategoryId = $input['productCategoryId'];
+    $header = $this->request->getHeaderLine('X-Tenant-Config');
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($header);
+
+    if (!$db) {
+        return $this->respond(['status' => false, 'message' => 'Database config error'], 500);
+    }
+
+    try {
+        $model = new ProductSubCategory($db);
+        $productSubCategory = $model
+            ->where('isDeleted', 0)
+            ->where('productCategoryId', $productCategoryId)
+            ->findAll();
+
+        return $this->respond([
+            'status' => true,
+            'message' => 'Data fetched successfully',
+            'data' => $productSubCategory
+        ], 200);
+
+    } catch (\Throwable $e) {
+        // 🛑 Log or return the actual error for debugging
+        return $this->respond([
+            'status' => false,
+            'message' => 'Internal Server Error',
+            'error' => $e->getMessage(),
+            // Optional for deeper debugging:
+            // 'file' => $e->getFile(),
+            // 'line' => $e->getLine(),
+            // 'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
+}
+
+
 
 public function updateSubProductCategory()
 {
