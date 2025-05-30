@@ -188,8 +188,8 @@ class Order extends BaseController
 
         // Decode JSON fields if sent as strings
         $items = is_string($input->items) ? json_decode($input->items) : $input->items;
-        $taxData = is_string($input->totalTax) ? json_decode($input->totalTax) : $input->totalTax;
-        $discountData = is_string($input->discount) ? json_decode($input->discount) : $input->discount;
+        $taxData = isset($_POST['totalTax']) ? json_decode($_POST['totalTax'], true) : null;
+        $discountData = isset($_POST['discount']) ? json_decode($_POST['discount'], true) : null;
 
         // Prepare data for order
         $orderData = [
