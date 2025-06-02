@@ -387,8 +387,8 @@ public function login()
     }
 
     // Step 1: Connect to tenant DB
-    $dbName = $selectedCard;
-    $tenantDb = \App\Libraries\TenantDatabase::connectTo($dbName);
+    $tenant = $selectedCard;
+    $tenantDb = \App\Libraries\TenantDatabase::connectTo($tenant);
 
     if (!$tenantDb) {
         return $this->respond([

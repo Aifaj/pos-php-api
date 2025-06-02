@@ -5,20 +5,19 @@ use Config\Database;
 
 class TenantDatabase
 {
-    public static function connectTo(string $dbName)
+   public static function connectTo(array $tenant)
     {
-        // Return new database connection for tenant
         return \Config\Database::connect([
-            'hostname'   => 'localhost',
-            'username'   => 'root',
-            'password'   => '',
-            'database'   => $dbName,
+            'hostname'   => $tenant['hostUrl'],      
+            'username'   => $tenant['username'],    
+            'password'   => $tenant['password'],    
+            'database'   => $tenant['databaseName'],
             'DBDriver'   => 'MySQLi',
             'DBPrefix'   => '',
             'pConnect'   => false,
             'dbDebug'    => (ENVIRONMENT !== 'production'),
-            'charset'    => 'utf8mb4', // ✅ REQUIRED
-            'DBCollat'   => 'utf8mb4_general_ci', // ✅ Optional but recommended
+            'charset'    => 'utf8mb4',
+            'DBCollat'   => 'utf8mb4_general_ci',
             'cacheOn'    => false,
             'encrypt'    => false,
             'compress'   => false,
