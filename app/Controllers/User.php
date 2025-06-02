@@ -374,6 +374,7 @@ class User extends BaseController
 public function login()
 {
     $data = $this->request->getJSON(true);
+    log_message('debug', 'Login Data: ' . print_r($data, true));
     $email = $data['email'] ?? null;
     $password = $data['password'] ?? null;
     $selectedCard = $data['selectedCard'] ?? null;

@@ -12,20 +12,10 @@ class CorsFilter implements FilterInterface
     {
         // Allowed origins (you can extend or modify this list as needed)
         $allowedOrigins = [
-            'https://admin.exiaa.com',
             'http://localhost:4200',
             'http://localhost:8100',
-            'https://shritej.in',
-            'https://www.shritej.in',
-            'http://shritej.in',
-            'https://jisarwa.in',
-            'https://www.jisarwa.in',
-            'https://realpowershop.com',
-            'https://www.realpowershop.com',
-            'https://netbugs.in/',
-            'https://www.netbugs.in/',
-            'https://netbugs.co.in',
-            'https://www.netbugs.co.in',
+            'https://biznfc.io',
+            'https://www.biznfc.io'
         ];
 
         // Get the origin of the request

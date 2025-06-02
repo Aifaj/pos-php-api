@@ -8,20 +8,11 @@ use CodeIgniter\Router\RouteCollection;
 $allowed_origins = [
   'http://localhost:4200',
   'http://localhost:8100',
-  'https://shritej.in',
-  'https://www.shritej.in',
-  'http://shritej.in',
-  'https://admin.exiaa.com',
-  'https://jisarwa.in',
-  'https://www.jisarwa.in',
-  'https://realpowershop.com',
-  'https://www.realpowershop.com',
-  'https://netbugs.in',
-  'https://www.netbugs.in',
-  'https://netbugs.co.in',
-  'https://www.netbugs.co.in',
+  'https://biznfc.io',
+  'https://www.biznfc.io'
 ];
 $routes->options('(:any)', function () use ($allowed_origins){
+  log_message('error', 'CORS preflight request received'); 
   if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
   }
@@ -36,7 +27,7 @@ $routes->options('(:any)', function () use ($allowed_origins){
 
 $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
 
-   $routes->group('table', function ($routes) {
+  $routes->group('table', function ($routes) {
     $routes->get('getalltable', 'TablesController::getalltable',['filter' => 'tenantFilter']); 
     $routes->post('addTable', 'TablesController::addTable',['filter' => 'tenantFilter']); 
     $routes->post('updateTable', 'TablesController::updateTable',['filter' => 'tenantFilter']); 

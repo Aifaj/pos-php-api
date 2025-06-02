@@ -27,9 +27,9 @@ class Database extends Config
     public array $default = [
         'DSN'          => '',
         'hostname'     => 'localhost',
-        'username'     => 'root',
-        'password'     => '',
-        'database'     => 'biznfc_db',
+        'username'     => 'u689870652_biznfc_db',
+        'password'     => 'Biznfc@11',
+        'database'     => 'u689870652_biznfc_db',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
