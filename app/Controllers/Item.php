@@ -529,6 +529,10 @@ public function update()
                 'productCategoryId' => $input['productCategoryId'] ?? '',
                 'productSubCategoryId' => $input['productSubCategoryId'] ?? '',
                 'gstPercentage' => $input['gstPercentage'] ?? '',
+                'gstAmount' => $input['gstAmount'] ?? '',
+                 'isActive' => $input['isActive'] ?? '',
+                 'isInStock' => $input['isInStock'] ?? '',
+
             ];
 
             // Save cover image

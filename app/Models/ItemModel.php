@@ -15,9 +15,9 @@ class ItemModel extends Model
     protected $allowedFields    = ['itemId', 'itemName','itemCode','coverImage',
      'productImages', 'itemTypeId','gstAmount', 'categoryInputFieldValues', 'itemCategoryId',
      'productCategoryId','productSubCategoryId', 'brandName', 'unit', 'unitSize', 'mrp', 'sku',
-     'startDate','duration', 'gstPercentage', 'discountType', 'discount', 'barcode', 'hsnCode',
+     'startDate','duration', 'gstPercentage','gstAmount', 'discountType', 'discount', 'barcode', 'hsnCode',
       'minStockLevel', 'description', 'tags','feature', 'termsCondition',  'portion','addons',
-      'isPortion','isAddons', 'assignBy','unitName','finalPrice','createdBy', 'createdDate', 
+      'isPortion','isAddons', 'assignBy','unitName','finalPrice','createdBy', 'createdDate','isInStock',
       'modifiedBy', 'modifiedDate', 'isActive', 'isDeleted','type', 'shortCode', 'kitchenDepartment',
       'allergenInfo', 'stockStatus',];
 
