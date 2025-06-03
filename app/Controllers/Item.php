@@ -509,6 +509,14 @@ public function update()
                 'discount' => $input['discount'] ?? '',
                 'barcode' => $input['barcode'] ?? '',
                 'description' => $input['description'] ?? '',
+                'shortCode' => $input['shortCode'] ?? '',
+                'kitchenDepartment' => $input['kitchenDepartment'] ?? '',
+
+                'allergenInfo' => isset($input['allergenInfo']) && is_array($input['allergenInfo'])
+                ? json_encode($input['allergenInfo'])  // ✅ Option 1: JSON
+                : ($input['allergenInfo'] ?? ''),
+                'type' => $input['type'] ?? '',
+
                 'itemTypeId' => $input['itemTypeId'] ?? '',
                 'sku' => $input['sku'] ?? '',
                 'hsnCode' => $input['hsnCode'] ?? '',
@@ -855,9 +863,12 @@ public function createCategory()
          // Insert the product data into the database
          $tenantService = new TenantService();
          // Connect to the tenant's database
+
          $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+         
         $model = new ItemCategory($db);
         $itemCategories = $model->findAll();
+
         return $this->respond(["status" => true, "message" => "All Data Fetched", "data" => $itemCategories], 200);
     }
 

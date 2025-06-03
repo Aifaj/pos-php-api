@@ -12,7 +12,14 @@ class ItemModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['itemId', 'itemName','itemCode','coverImage', 'productImages', 'itemTypeId','gstAmount', 'categoryInputFieldValues', 'itemCategoryId','productCategoryId','productSubCategoryId', 'brandName', 'unit', 'unitSize', 'mrp', 'sku','startDate','duration', 'gstPercentage', 'discountType', 'discount', 'barcode', 'hsnCode', 'minStockLevel', 'description', 'tags','feature', 'termsCondition', 'type', 'portion','addons','isPortion','isAddons', 'assignBy','unitName','finalPrice','createdBy', 'createdDate', 'modifiedBy', 'modifiedDate', 'isActive', 'isDeleted'];
+    protected $allowedFields    = ['itemId', 'itemName','itemCode','coverImage',
+     'productImages', 'itemTypeId','gstAmount', 'categoryInputFieldValues', 'itemCategoryId',
+     'productCategoryId','productSubCategoryId', 'brandName', 'unit', 'unitSize', 'mrp', 'sku',
+     'startDate','duration', 'gstPercentage', 'discountType', 'discount', 'barcode', 'hsnCode',
+      'minStockLevel', 'description', 'tags','feature', 'termsCondition',  'portion','addons',
+      'isPortion','isAddons', 'assignBy','unitName','finalPrice','createdBy', 'createdDate', 
+      'modifiedBy', 'modifiedDate', 'isActive', 'isDeleted','type', 'shortCode', 'kitchenDepartment',
+      'allergenInfo', 'stockStatus',];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
