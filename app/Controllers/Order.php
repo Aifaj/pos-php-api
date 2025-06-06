@@ -194,6 +194,10 @@ class Order extends BaseController
         // Prepare data for order
         $orderData = [
             'orderNo' => $input->orderNo,
+            'orderTo' => $input->orderTo ?? null,
+            'orderToSpe' => $input->orderToSpe ?? null,
+            'orderFrom' => $input->orderFrom ?? null,
+            'orderFromSpe' => $input->orderFromSpe ?? null,
             'orderDate' => $input->orderDate,
             'orderStatus' => 'Pending',
             'customerId' => $input->customerId ?? null,
