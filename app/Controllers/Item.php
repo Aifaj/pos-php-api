@@ -419,7 +419,7 @@ public function getalladdons()
                 mkdir($coverImagePath, 0777, true);
             }
 
-            $coverImageName = uniqid() . '.png';
+            $coverImageName = uniqid() . '.webp';
             file_put_contents($coverImagePath . $coverImageName, $coverImageData);
 
             $input['coverImage'] = $tenantName . '/itemImages/' . $coverImageName;
@@ -437,7 +437,7 @@ public function getalladdons()
                     if (empty($base64Image)) continue;
 
                     $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                    $imageName = uniqid() . '.png';
+                    $imageName = uniqid() . '.webp';
                     $productImagePath = FCPATH . 'uploads/' . $tenantName . '/itemSlideImages/';
 
                     if (!is_dir($productImagePath)) {
@@ -544,7 +544,7 @@ public function update()
                     mkdir($coverImagePath, 0777, true);
                 }
 
-                $coverImageName = uniqid() . '.png';
+                $coverImageName = uniqid() . '.webp';
                 file_put_contents($coverImagePath . $coverImageName, $coverImageData);
 
                 $updateData['coverImage'] = $tenantName . '/itemImages/' . $coverImageName;
@@ -563,7 +563,7 @@ public function update()
 
         $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $base64Image);
         $imageHash = md5($imageData);
-        $imageName = $imageHash . '.png';
+        $imageName = $imageHash . '.webp';
         $productImagePath = FCPATH . 'uploads/' . $tenantName . '/itemSlideImages/';
 
         if (!is_dir($productImagePath)) {
