@@ -579,13 +579,49 @@ public function update()
         $imageUrls[] = $tenantName . '/itemSlideImages/' . $imageName;
     }
 
-    if (count($imageUrls) > 0) {
-        $existingImages = array_filter(array_map('trim', explode(',', $item['productImages'] ?? '')));
-        $newImages = array_filter(array_map('trim', $imageUrls));
-        $mergedImages = array_unique(array_merge($existingImages, $newImages));
+    // if (count($imageUrls) > 0) {
+    //     $existingImages = array_filter(array_map('trim', explode(',', $item['productImages'] ?? '')));
+    //     $newImages = array_filter(array_map('trim', $imageUrls));
+    //     $mergedImages = array_unique(array_merge($existingImages, $newImages));
 
-        $updateData['productImages'] = implode(',', $mergedImages);
+    //     $updateData['productImages'] = implode(',', $mergedImages);
+    // }
+
+    if (!empty($input['productImages'])) {
+        // Decode JSON string into array
+        $productImagesInput = json_decode($input['productImages'], true);
+    
+        $finalImagePaths = [];
+    
+        foreach ($productImagesInput as $img) {
+            if (strpos($img, 'data:image') === 0) {
+                // This is a base64 image
+                $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $img);
+                $imageHash = md5($imageData);
+                $imageName = $imageHash . '.webp';
+                $productImagePath = FCPATH . 'uploads/' . $tenantName . '/itemSlideImages/';
+    
+                if (!is_dir($productImagePath)) {
+                    mkdir($productImagePath, 0777, true);
+                }
+    
+                $fullImagePath = $productImagePath . $imageName;
+    
+                // if (!file_exists($fullImagePath)) {
+                //     file_put_contents($fullImagePath, base64_decode($imageData));
+                // }
+    
+                $finalImagePaths[] = $tenantName . '/itemSlideImages/' . $imageName;
+            } else {
+                // Already an existing path (not base64)
+                $relativePath = str_replace(base_url('uploads/'), '', $img);
+                $finalImagePaths[] = $relativePath;
+            }
+        }
+    
+        $updateData['productImages'] = implode(',', array_unique($finalImagePaths));
     }
+    
 }
             if ($model->update($itemId, $updateData)) {
                 return $this->respond(['status' => true, 'message' => 'Item Updated Successfully'], 200);
@@ -1080,7 +1116,7 @@ public function createCategory()
             // Define validation rules
             $rules = [
                 'productCategoryName' => ['rules' => 'required'],
-                'description' => ['rules' => 'required'],
+                'description' => [],
             ];
     
             if (!$this->validate($rules)) {
@@ -1146,7 +1182,7 @@ public function updateProductCategory()
 
         $rules = [
             'productCategoryName' => ['rules' => 'required'],
-            'description' => ['rules' => 'required'],
+            'description' => [],
         ];
 
         if ($this->validate($rules)) {
@@ -1214,7 +1250,7 @@ public function createProductSubCategory()
             $rules = [
                 'productSubCategoryName' => ['rules' => 'required'],
                 'productCategoryId' => ['rules' => 'required'],
-                'description' => ['rules' => 'required'],
+                'description' => [],
             ];
     
             if (!$this->validate($rules)) {
@@ -1321,7 +1357,7 @@ public function updateSubProductCategory()
         $rules = [
             'productSubCategoryName' => ['rules' => 'required'],
             'productCategoryId' => ['rules' => 'required'],
-            'description' => ['rules' => 'required'],
+            'description' => [],
         ];
 
         if ($this->validate($rules)) {
