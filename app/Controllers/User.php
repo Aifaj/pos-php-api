@@ -1234,6 +1234,7 @@ public function assignBusiness()
     $insertData = [
                 'resTitle'       => $data['resTitle'],
                 'resName'        => $data['resName'],
+                'resQrData'        => $data['resQrData'],
                 'resAddress'     => $data['resAddress'],
                 'resContactNo'   => $data['resContactNo'],
                 'resTrn'         => $data['resTrn'] ?? null,
@@ -1339,6 +1340,12 @@ public function updateRestaurantDetails()
     if (isset($data['resTrn'])) {
         $updateData['resTrn'] = $data['resTrn'];
     }
+
+     if (isset($data['resQrData'])) {
+        $updateData['resQrData'] = $data['resQrData'];
+    }
+
+    
     if (isset($data['resLogo'])) {
         $updateData['resLogo'] = $data['resLogo'];
     }

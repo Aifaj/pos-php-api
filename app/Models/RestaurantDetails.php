@@ -16,6 +16,7 @@ class RestaurantDetails extends Model
     protected $allowedFields    = [
         'resTitle',
         'resName',
+        'resQrData',
         'resAddress',
         'resContactNo',
         'resTrn',
