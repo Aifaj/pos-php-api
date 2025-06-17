@@ -6,6 +6,9 @@ use App\Controllers\BaseController;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\CustomerModel;
 use App\Models\CustomerAddress;
+use App\Models\CustomerDiscount;
+
+
 use Config\Database;
 use App\Libraries\TenantService;
 use \Firebase\JWT\JWT;
@@ -643,5 +646,177 @@ public function getallCustomer()
             return $this->fail($response, 409);
         }
     }
+
+    public function addDiscount()
+{
+    try {
+        $input = $this->request->getJSON(true);
+
+        // Define validation rules
+        $rules = [
+            'customerId' => ['rules' => 'required'],
+            'disType' => ['rules' => 'required'],
+            'value' => ['rules' => 'required'],
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->fail([
+                'status' => false,
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs',
+            ], 409);
+        }
+
+
+        // Connect to tenant DB
+        $tenantService = new TenantService();
+        $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+        // Insert into customer model
+        $model = new CustomerDiscount($db);
+        $model->insert($input);
+
+        return $this->respond(['status' => true, 'message' => 'Discount Added Successfully'], 200);
+
+    } catch (\Throwable $e) {
+        return $this->fail([
+            'status' => false,
+            'message' => 'Server Error: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+}
+public function getAllDiscount()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $itemModel = new CustomerDiscount($db);
+
+    // Fetch only addons where isDeleted = 0
+    $discount = $itemModel->where('isDeleted', 0)->findAll();
+
+    $response = [
+        "status" => true,
+        "message" => "All Data Fetched",
+        "data" => $discount,
+    ];
+
+    return $this->respond($response, 200);
+}
+
+public function updateDiscount()
+{
+    $tenantService = new TenantService();
+    $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+
+    $model = new CustomerDiscount($db);
+
+    // Get input data
+    $data = $this->request->getJSON(true);
+
+    if (!isset($data['customerDiscountId'])) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'customerDiscountId is required'
+        ], 400);
+    }
+
+    $customerDiscountId = $data['customerDiscountId'];
+
+    // Check if addon exists
+    $existing = $model->find($customerDiscountId);
+    if (!$existing) {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Discount not found'
+        ], 404);
+    }
+
+    // Prepare fields to update
+    $updateData = [];
+
+    if (isset($data['customerId'])) {
+        $updateData['customerId'] = $data['customerId'];
+    }
+
+    if (isset($data['disType'])) {
+        $updateData['disType'] = $data['disType'];
+    }
+
+    if (isset($data['value'])) {
+        $updateData['value'] = $data['value'];
+    }
+
+    if (isset($data['isActive'])) {
+        $updateData['isActive'] = $data['isActive'];
+    }
+
+    if (isset($data['isDeleted'])) {
+        $updateData['isDeleted'] = $data['isDeleted'];
+    }
+
+    $updateData['updatedDate'] = date('Y-m-d H:i:s');
+
+    // Perform the update
+    if ($model->update($customerDiscountId, $updateData)) {
+        return $this->respond([
+            'status' => true,
+            'message' => 'Discount updated successfully',
+            'data' => $updateData
+        ], 200);
+    } else {
+        return $this->respond([
+            'status' => false,
+            'message' => 'Failed to update discount',
+            'errors' => $discount->errors()
+        ], 500);
+    }
+}
+
+public function deleteCustomerDiscount()
+    {
+        $input = $this->request->getJSON();
+    
+        // Validation rules
+        $rules = [
+            'customerDiscountId' => ['rules' => 'required'],
+        ];
+    
+        if ($this->validate($rules)) {
+            $tenantService = new TenantService();
+            $db = $tenantService->getTenantConfig($this->request->getHeaderLine('X-Tenant-Config'));
+            $model = new CustomerDiscount($db);
+    
+            // Retrieve the address
+            $customerDiscountId = $input->customerDiscountId;
+            $discount = $model->find($customerDiscountId);
+    
+            if (!$discount) {
+                return $this->fail(['status' => false, 'message' => 'Id not found'], 404);
+            }
+    
+            // Soft delete
+            $updateData = [
+                'isDeleted' => 1,
+            ];
+            $deleted = $model->update($customerDiscountId, $updateData);
+    
+            if ($deleted) {
+                return $this->respond(['status' => true, 'message' => 'Discount  Deleted Successfully'], 200);
+            } else {
+                return $this->fail(['status' => false, 'message' => 'Failed to delete Discount'], 500);
+            }
+        } else {
+            // Validation failed
+            $response = [
+                'status' => false,
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs',
+            ];
+            return $this->fail($response, 409);
+        }
+    }
+
     
 }

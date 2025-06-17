@@ -154,6 +154,19 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('deleteAddress', 'Customer::deleteAddress',['filter' => ['tenantFilter']]);
     $routes->post('addCustomerAddress', 'Customer::addCustomerAddress',['filter' => ['tenantFilter']]);
 
+    $routes->post('addDiscount', 'Customer::addDiscount',['filter' => ['tenantFilter']]);
+    $routes->post('updateDiscount', 'Customer::updateDiscount',['filter' => ['tenantFilter']]);
+    $routes->get('getAllDiscount', 'Customer::getAllDiscount',['filter' => ['tenantFilter']]);
+    $routes->post('deleteCustomerDiscount', 'Customer::deleteCustomerDiscount',['filter' => ['tenantFilter']]);
+
+
+
+
+
+
+
+    
+
 
     
 
@@ -218,7 +231,17 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('updateSubProductCategory', 'Item::updateSubProductCategory',['filter' => ['tenantFilter']]);
     $routes->post('getAllProductSubCategoryByCategoryId', 'Item::getAllProductSubCategoryByCategoryId',['filter' => ['tenantFilter']]);
 
-    
+    $routes->get('getAllDiscount', 'Item::getAllDiscount',['filter' => ['tenantFilter']]);
+    $routes->post('updateDiscount', 'Item::updateDiscount',['filter' => ['tenantFilter']]);
+    $routes->post('deleteDiscount', 'Item::deleteDiscount',['filter' => ['tenantFilter']]);
+    $routes->post('createDiscount', 'Item::createDiscount',['filter' => ['tenantFilter']]);
+
+
+
+
+
+
+
 
 
 
